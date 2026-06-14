@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="description" content="Report content on Xplitleaks">
+
+    <title id="pageTitle">Report Content - Xplitleaks</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ff0050',
+                        secondary: '#00f2ea',
+                        dark: '#0a0a0a',
+                        darker: '#050505',
+                        card: '#1a1a1a',
+                        border: '#333333',
+                        muted: '#888888',
+                        danger: '#ff0050',
+                        warning: '#ffab00',
+                        success: '#00c853'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Site Config -->
+    <script src="site-config.js"></script>
+
+    <style>
+        * { transition-property: background-color, border-color, color; transition-duration: 150ms; }
+
+        @keyframes gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .animate-gradient {
+            background-size: 200% 200%;
+            animation: gradient 3s ease infinite;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-down { animation: slideDown 0.3s ease-out; }
+
+        .input-field {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #ff0050;
+            box-shadow: 0 0 0 3px rgba(255, 0, 80, 0.2);
+        }
+        .input-field::placeholder { color: #888; }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff0050, #ff4081);
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 0, 80, 0.4);
+        }
+        .btn-primary:active { transform: translateY(0); }
+    </style>
+</head>
+<body class="bg-darker text-white font-sans antialiased min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-dark border-b border-border sticky top-0 z-50">
+        <div class="px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="flex items-center gap-2">
+                    <div id="siteLogo" data-site-logo="h-8" class="hidden"></div>
+                    <h1 id="siteName" data-site-name class="text-xl font-bold bg-gradient-to-r from-primary via-purple-500 to-secondary bg-clip-text text-transparent animate-gradient">
+                        Xplitleaks
+                    </h1>
+                </a>
+            </div>
+            <a id="backBtn" href="index.html" class="inline-flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium hover:bg-primary hover:border-primary transition-all">
+                <i class="fas fa-arrow-left"></i>
+                <span class="hidden sm:inline">Back</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-2xl mx-auto px-4 py-8">
+        <div class="space-y-6">
+            <!-- Report Form -->
+            <div class="bg-card border border-border rounded-xl p-6 space-y-6 animate-slide-down">
+                <div class="text-center">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-danger/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-flag text-danger text-2xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold">Report Content</h2>
+                    <p class="text-muted mt-2">Help us keep the platform safe by reporting inappropriate content.</p>
+                </div>
+
+                <!-- Content Info -->
+                <div id="contentInfo" class="bg-dark border border-border rounded-lg p-4 hidden">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-video text-primary text-xl"></i>
+                        <div>
+                            <div id="contentTypeLabel" class="text-sm text-muted">Reporting video</div>
+                            <div id="contentIdDisplay" class="font-medium"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Form -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Reason for Report *</label>
+                        <select id="reportReason" class="input-field">
+                            <option value="">Select a reason</option>
+                            <option value="copyright">Copyright Infringement</option>
+                            <option value="csam">Child Sexual Abuse Material (CSAM)</option>
+                            <option value="non-consensual">Non-Consensual Content</option>
+                            <option value="violence">Violence or Gore</option>
+                            <option value="harassment">Harassment or Bullying</option>
+                            <option value="spam">Spam or Misleading</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Details</label>
+                        <textarea id="reportDetails" class="input-field" rows="4" placeholder="Please provide additional details about your report..."></textarea>
+                    </div>
+
+                    <div class="border-t border-border pt-4">
+                        <p class="text-sm text-muted mb-4">Optional contact information (for follow-up)</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Your Name</label>
+                                <input type="text" id="reporterName" class="input-field" placeholder="John Doe">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Email</label>
+                                <input type="email" id="reporterEmail" class="input-field" placeholder="your@email.com">
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium mb-2">Phone (optional)</label>
+                            <input type="tel" id="reporterPhone" class="input-field" placeholder="+1 234 567 890">
+                        </div>
+                    </div>
+
+                    <button onclick="submitReport()" class="btn-primary w-full py-3 rounded-lg font-semibold flex items-center justify-center gap-2">
+                        <i class="fas fa-paper-plane"></i>
+                        Submit Report
+                    </button>
+
+                    <div id="reportError" class="text-red-500 text-sm text-center hidden"></div>
+                    <div id="reportSuccess" class="text-green-500 text-sm text-center hidden"></div>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="bg-card border border-border rounded-xl p-6">
+                <h3 class="font-semibold mb-3 flex items-center gap-2">
+                    <i class="fas fa-info-circle text-primary"></i>
+                    What happens next?
+                </h3>
+                <ul class="space-y-2 text-sm text-muted">
+                    <li class="flex items-start gap-2">
+                        <i class="fas fa-check-circle text-success mt-0.5"></i>
+                        Your report will be reviewed by our moderation team
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fas fa-check-circle text-success mt-0.5"></i>
+                        Action is typically taken within 24-48 hours
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fas fa-check-circle text-success mt-0.5"></i>
+                        You'll be contacted if you provided email for follow-up
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fas fa-check-circle text-success mt-0.5"></i>
+                        All reports are kept confidential
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        var CONFIG = {
+            apiEndpoint: (typeof SITE_CONFIG !== 'undefined') ? SITE_CONFIG.apiEndpoint : 'https://xplitleaks-api.dylancoral.workers.dev/api'
+        };
+
+        var siteConfig = {};
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSiteConfigForReport();
+            setupBackButton();
+            loadContentInfo();
+        });
+
+        async function loadSiteConfigForReport() {
+            try {
+                var response = await safeFetch(CONFIG.apiEndpoint + '/config');
+                siteConfig = await response.json();
+
+                if (siteConfig.siteName) {
+                    var nameEls = document.querySelectorAll('[data-site-name]');
+                    nameEls.forEach(function(el) { el.textContent = siteConfig.siteName; });
+                }
+
+                // Use enhanced logo renderer
+                if (typeof renderSiteLogo === 'function') {
+                    await renderSiteLogo(document.getElementById('siteLogo'), siteConfig, 'h-8');
+                }
+
+                if (siteConfig.faviconUrl && typeof setFavicon === 'function') {
+                    setFavicon(siteConfig.faviconUrl);
+                }
+            } catch (e) {}
+        }
+
+        async function safeFetch(url, options) {
+            if (!navigator.onLine) throw new Error('You are offline');
+            var controller = new AbortController();
+            var timeoutId = setTimeout(function() { controller.abort(); }, 15000);
+            try {
+                var response = await fetch(url, Object.assign({}, options || {}, { signal: controller.signal }));
+                clearTimeout(timeoutId);
+                return response;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') throw new Error('Request timed out');
+                throw error;
+            }
+        }
+
+        function setupBackButton() {
+            var hash = window.location.hash;
+            if (hash && hash.startsWith('#back=')) {
+                var backUrl = decodeURIComponent(hash.substring(6));
+                document.getElementById('backBtn').href = backUrl;
+            }
+        }
+
+        function loadContentInfo() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var contentId = urlParams.get('id');
+            var contentType = urlParams.get('type') || 'video';
+
+            if (contentId) {
+                document.getElementById('contentInfo').classList.remove('hidden');
+                document.getElementById('contentTypeLabel').textContent = 'Reporting ' + (contentType === 'short' ? 'short' : 'video');
+                document.getElementById('contentIdDisplay').textContent = 'ID: ' + contentId;
+            }
+        }
+
+        async function submitReport() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var contentId = urlParams.get('id');
+            var contentType = urlParams.get('type') || 'video';
+            var reason = document.getElementById('reportReason').value;
+            var details = document.getElementById('reportDetails').value.trim();
+            var reporterName = document.getElementById('reporterName').value.trim();
+            var reporterEmail = document.getElementById('reporterEmail').value.trim();
+            var reporterPhone = document.getElementById('reporterPhone').value.trim();
+
+            var errorEl = document.getElementById('reportError');
+            var successEl = document.getElementById('reportSuccess');
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+
+            if (!contentId) {
+                errorEl.textContent = 'No content specified to report';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            if (!reason) {
+                errorEl.textContent = 'Please select a reason for your report';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            if (reporterEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reporterEmail)) {
+                errorEl.textContent = 'Invalid email format';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                var response = await safeFetch(CONFIG.apiEndpoint + '/report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contentId: contentId,
+                        contentType: contentType,
+                        reason: reason,
+                        details: details,
+                        reporterName: reporterName || null,
+                        reporterEmail: reporterEmail || null,
+                        reporterPhone: reporterPhone || null
+                    })
+                });
+                var data = await response.json();
+
+                if (data.success) {
+                    successEl.textContent = 'Report submitted successfully. Thank you for helping keep our platform safe.';
+                    successEl.classList.remove('hidden');
+
+                    document.getElementById('reportReason').value = '';
+                    document.getElementById('reportDetails').value = '';
+
+                    setTimeout(function() {
+                        var backBtn = document.getElementById('backBtn');
+                        window.location.href = backBtn.href || 'index.html';
+                    }, 3000);
+                } else {
+                    errorEl.textContent = data.error || 'Failed to submit report';
+                    errorEl.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorEl.textContent = error.message || 'Failed to submit report';
+                errorEl.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

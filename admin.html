@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Xplitleaks Admin Panel">
+    <meta property="og:site_name" content="Xplitleaks Admin">
+
+    <title id="pageTitle">Admin Panel - Xplitleaks</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ff0050',
+                        secondary: '#00f2ea',
+                        dark: '#0a0a0a',
+                        darker: '#050505',
+                        card: '#1a1a1a',
+                        border: '#333333',
+                        muted: '#888888',
+                        success: '#00c853',
+                        danger: '#ff0050',
+                        warning: '#ffab00'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Site Config -->
+    <script src="site-config.js"></script>
+
+    <style>
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ff0050; }
+
+        * { transition: background-color 0.15s, border-color 0.15s, color 0.15s; }
+
+        .animate-gradient {
+            background-size: 200% 200%;
+            animation: gradient 3s ease infinite;
+        }
+        @keyframes gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .slide-down { animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .nav-item { position: relative; }
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+            transform: scaleX(0);
+            transition: transform 0.2s;
+        }
+        .nav-item.active::after { transform: scaleX(1); }
+
+        .table-row { transition: background-color 0.15s; }
+        .table-row:hover { background-color: rgba(255, 0, 80, 0.05); }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff0050, #ff4081);
+            transition: all 0.2s;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255, 0, 80, 0.4); }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #00f2ea, #00bcd4);
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 242, 234, 0.4); }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+        }
+
+        .input-field {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 0, 80, 0.2);
+        }
+        .input-field::placeholder { color: #888; }
+
+        /* Logo in sidebar */
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+        }
+    </style>
+</head>
+<body class="bg-darker text-white font-sans antialiased min-h-screen">
+
+    <!-- ==================== LOGIN SCREEN ==================== -->
+    <div id="loginScreen" class="fixed inset-0 z-[100] flex items-center justify-center bg-darker">
+        <div class="w-full max-w-md p-8">
+            <div class="text-center mb-8">
+                <div id="loginLogo" data-site-logo="h-12" class="hidden mx-auto mb-4"></div>
+                <div id="loginSiteName" data-site-name class="text-3xl font-bold bg-gradient-to-r from-primary via-purple-500 to-secondary bg-clip-text text-transparent animate-gradient">
+                    Xplitleaks
+                </div>
+                <p class="text-muted mt-2">Admin Panel</p>
+            </div>
+
+            <div class="bg-card border border-border rounded-xl p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Password</label>
+                    <input type="password" id="password" class="input-field" placeholder="Enter admin password" onkeypress="if(event.key==='Enter')login()">
+                </div>
+                <button onclick="login()" class="btn-primary w-full py-3 rounded-lg font-semibold flex items-center justify-center gap-2">
+                    <i class="fas fa-lock"></i>
+                    Login
+                </button>
+                <div id="loginError" class="text-danger text-sm text-center hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== ADMIN DASHBOARD ==================== -->
+    <div id="adminDashboard" class="hidden">
+
+        <!-- Header -->
+        <header class="bg-dark border-b border-border sticky top-0 z-50">
+            <div class="px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div id="dashLogo" data-site-logo="h-8" class="hidden"></div>
+                    <h1 data-site-name class="text-xl font-bold bg-gradient-to-r from-primary via-purple-500 to-secondary bg-clip-text text-transparent animate-gradient">
+                        Xplitleaks
+                    </h1>
+                    <span class="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full font-semibold">Admin</span>
+                </div>
+                <button onclick="logout()" class="text-muted hover:text-primary transition-colors flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-card">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="hidden sm:inline">Logout</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="bg-dark border-b border-border sticky top-[61px] z-40 overflow-x-auto">
+            <div class="flex gap-1 p-2 min-w-max">
+                <button onclick="switchTab('overview')" class="nav-item active px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2" data-tab="overview">
+                    <i class="fas fa-chart-line"></i> Overview
+                </button>
+                <button onclick="switchTab('config')" class="nav-item px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2" data-tab="config">
+                    <i class="fas fa-cog"></i> Config
+                </button>
+                <button onclick="switchTab('creators')" class="nav-item px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2" data-tab="creators">
+                    <i class="fas fa-users"></i> Creators
+                </button>
+                <button onclick="switchTab('videos')" class="nav-item px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2" data-tab="videos">
+                    <i class="fas fa-video"></i> Videos
+                </button>
+                <button onclick="switchTab('shorts')" class="nav-item px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2" data-tab="shorts">
+                    <i class="fas fa-mobile-alt"></i> Shorts
+                </button>
+                <button onclick="switchTab('iframes')" class="nav-item px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2" data-tab="iframes">
+                    <i class="fas fa-globe"></i> Iframes
+                </button>
+                <button onclick="switchTab('reports')" class="nav-item px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 relative" data-tab="reports">
+                    <i class="fas fa-flag"></i> Reports
+                    <span id="reportsBadge" class="bg-primary text-white text-[0.6rem] px-1.5 py-0.5 rounded-full hidden">0</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+
+            <!-- Overview Tab -->
+            <div id="overview" class="tab-content active">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div class="bg-card border border-border rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-video text-primary text-xl"></i>
+                            <span class="text-xs text-muted">Videos</span>
+                        </div>
+                        <div class="text-2xl font-bold" id="totalVideos">0</div>
+                    </div>
+                    <div class="bg-card border border-border rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-mobile-alt text-secondary text-xl"></i>
+                            <span class="text-xs text-muted">Shorts</span>
+                        </div>
+                        <div class="text-2xl font-bold" id="totalShorts">0</div>
+                    </div>
+                    <div class="bg-card border border-border rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-globe text-green-500 text-xl"></i>
+                            <span class="text-xs text-muted">Iframes</span>
+                        </div>
+                        <div class="text-2xl font-bold" id="totalIframes">0</div>
+                    </div>
+                    <div class="bg-card border border-border rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-users text-purple-500 text-xl"></i>
+                            <span class="text-xs text-muted">Creators</span>
+                        </div>
+                        <div class="text-2xl font-bold" id="totalCreators">0</div>
+                    </div>
+                    <div class="bg-card border border-border rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-eye text-blue-500 text-xl"></i>
+                            <span class="text-xs text-muted">Total Views</span>
+                        </div>
+                        <div class="text-2xl font-bold" id="totalViews">0</div>
+                    </div>
+                    <div class="bg-card border border-border rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-exclamation-triangle text-warning text-xl"></i>
+                            <span class="text-xs text-muted">Pending</span>
+                        </div>
+                        <div class="text-2xl font-bold text-warning" id="pendingReports">0</div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-card border border-border rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <i class="fas fa-chart-bar text-primary"></i>
+                            Daily Uploads (Videos)
+                        </h3>
+                        <canvas id="uploadsChart"></canvas>
+                    </div>
+                    <div class="bg-card border border-border rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <i class="fas fa-chart-line text-secondary"></i>
+                            Daily Uploads (Shorts)
+                        </h3>
+                        <canvas id="shortsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Config Tab -->
+            <div id="config" class="tab-content">
+                <div class="bg-card border border-border rounded-xl p-6 max-w-2xl">
+                    <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                        <i class="fas fa-cog text-primary"></i>
+                        Site Configuration
+                    </h2>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Site Name</label>
+                            <input type="text" id="configSiteName" class="input-field" placeholder="Xplitleaks">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Primary Color</label>
+                            <div class="flex gap-2">
+                                <input type="color" id="configPrimaryColor" class="w-12 h-10 rounded-lg cursor-pointer bg-transparent border border-border">
+                                <input type="text" id="configPrimaryColorText" class="input-field flex-1" placeholder="#ff0050" onchange="document.getElementById('configPrimaryColor').value=this.value">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Site Logo (Image URL)</label>
+                            <input type="text" id="configSiteLogo" class="input-field" placeholder="https://example.com/logo.png">
+                            <p class="text-xs text-muted mt-1">URL to a PNG/JPG/WebP logo image. Overrides SVG logo if set.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Logo SVG (Inline SVG markup)</label>
+                            <textarea id="configSiteLogoSvg" class="input-field" rows="4" placeholder='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">...'></textarea>
+                            <p class="text-xs text-muted mt-1">Paste your inline SVG markup here. Used if image logo is empty.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Favicon URL</label>
+                            <input type="text" id="configFaviconUrl" class="input-field" placeholder="https://example.com/favicon.ico">
+                            <p class="text-xs text-muted mt-1">URL to favicon file (.ico, .png, .svg supported)</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Site Description</label>
+                            <textarea id="configSiteDescription" class="input-field" rows="2" placeholder="Site description for SEO..."></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2">R2 Public URL</label>
+                            <input type="text" id="configR2PublicUrl" class="input-field" placeholder="https://your-bucket.r2.cloudflarestorage.com/xplitleaks">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2">VAST Tag URL (Preroll Ads)</label>
+                            <input type="text" id="configVastTagUrl" class="input-field" placeholder="https://ads.example.com/vast.xml">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Placement URLs (Redirect Ads)</label>
+                            <textarea id="configPlacementUrls" class="input-field" rows="3" placeholder='["https://site-a.com/clk","https://site-b.com/clk"]'></textarea>
+                            <p class="text-xs text-muted mt-1">JSON array of placement URLs for click rotation</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Outstream Ad Scripts</label>
+                            <textarea id="configOutstreamAdTags" class="input-field" rows="3" placeholder='["https://ad1.example.com/script.js","https://ad2.example.com/script.js"]'></textarea>
+                            <p class="text-xs text-muted mt-1">JSON array of outstream ad script URLs</p>
+                        </div>
+
+                        <div class="flex items-center gap-3 pt-2">
+                            <input type="checkbox" id="configRegistrationEnabled" class="w-5 h-5 accent-primary rounded cursor-pointer">
+                            <label for="configRegistrationEnabled" class="cursor-pointer">Enable Creator Registration</label>
+                        </div>
+
+                        <button onclick="saveConfig()" class="btn-primary w-full py-3 rounded-lg font-semibold flex items-center justify-center gap-2 mt-4">
+                            <i class="fas fa-save"></i>
+                            Save Configuration
+                        </button>
+
+                        <div id="configMessage" class="text-center text-sm hidden"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Creators Tab -->
+            <div id="creators" class="tab-content">
+                <div class="bg-card border border-border rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <h2 class="text-xl font-semibold flex items-center gap-2">
+                            <i class="fas fa-users text-primary"></i>
+                            Creators
+                        </h2>
+                        <div class="flex gap-2">
+                            <select id="creatorFilter" onchange="loadCreators()" class="bg-dark border border-border rounded-lg px-3 py-2 text-sm">
+                                <option value="all">All Statuses</option>
+                                <option value="approved">Approved</option>
+                                <option value="pending">Pending</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-dark border-b border-border">
+                                <tr>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Creator</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Status</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Content</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Joined</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="creatorsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Videos Tab -->
+            <div id="videos" class="tab-content">
+                <div class="bg-card border border-border rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <h2 class="text-xl font-semibold flex items-center gap-2">
+                            <i class="fas fa-video text-primary"></i>
+                            Videos
+                        </h2>
+                        <div class="flex gap-2">
+                            <select id="videoFilter" onchange="loadVideos()" class="bg-dark border border-border rounded-lg px-3 py-2 text-sm">
+                                <option value="all">All</option>
+                                <option value="reported">Reported</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-dark border-b border-border">
+                                <tr>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Video</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Views</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Creator</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Added</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="videosTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shorts Tab -->
+            <div id="shorts" class="tab-content">
+                <div class="bg-card border border-border rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <h2 class="text-xl font-semibold flex items-center gap-2">
+                            <i class="fas fa-mobile-alt text-secondary"></i>
+                            Shorts
+                        </h2>
+                        <div class="flex gap-2">
+                            <select id="shortFilter" onchange="loadShorts()" class="bg-dark border border-border rounded-lg px-3 py-2 text-sm">
+                                <option value="all">All</option>
+                                <option value="reported">Reported</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-dark border-b border-border">
+                                <tr>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Short</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Views</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Creator</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Added</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shortsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Iframes Tab -->
+            <div id="iframes" class="tab-content">
+                <div class="bg-card border border-border rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-border">
+                        <h2 class="text-xl font-semibold flex items-center gap-2">
+                            <i class="fas fa-globe text-green-500"></i>
+                            Iframe Videos
+                        </h2>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-dark border-b border-border">
+                                <tr>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Video</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Source URL</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Creator</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Added</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="iframesTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div id="reports" class="tab-content">
+                <div class="bg-card border border-border rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <h2 class="text-xl font-semibold flex items-center gap-2">
+                            <i class="fas fa-flag text-warning"></i>
+                            Reports
+                        </h2>
+                        <div class="flex gap-2">
+                            <select id="reportFilter" onchange="loadReports()" class="bg-dark border border-border rounded-lg px-3 py-2 text-sm">
+                                <option value="all">All</option>
+                                <option value="pending">Pending</option>
+                                <option value="resolved">Resolved</option>
+                                <option value="dismissed">Dismissed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-dark border-b border-border">
+                                <tr>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">ID</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Content</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Reason</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Status</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Date</th>
+                                    <th class="text-left text-xs font-semibold text-muted uppercase tracking-wider px-4 py-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        var CONFIG = {
+            apiEndpoint: (typeof SITE_CONFIG !== 'undefined') ? SITE_CONFIG.apiEndpoint : 'https://xplitleaks-api.dylancoral.workers.dev/api'
+        };
+
+        var uploadsChartInstance = null;
+        var shortsChartInstance = null;
+        var siteConfig = {};
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSiteConfigForAdmin();
+            var token = sessionStorage.getItem('adminToken');
+            if (token) {
+                verifyToken(token);
+            }
+        });
+
+        async function loadSiteConfigForAdmin() {
+            try {
+                var response = await safeFetch(CONFIG.apiEndpoint + '/config');
+                siteConfig = await response.json();
+
+                // Update logo using enhanced renderer
+                if (typeof renderSiteLogo === 'function') {
+                    await renderSiteLogo(document.getElementById('loginLogo'), siteConfig, 'h-12');
+                }
+
+                // Site name
+                if (siteConfig.siteName) {
+                    var nameEls = document.querySelectorAll('[data-site-name]');
+                    nameEls.forEach(function(el) { el.textContent = siteConfig.siteName; });
+                }
+            } catch (e) {}
+        }
+
+        async function safeFetch(url, options) {
+            if (!navigator.onLine) throw new Error('You are offline');
+            var controller = new AbortController();
+            var timeoutId = setTimeout(function() { controller.abort(); }, 15000);
+            try {
+                var response = await fetch(url, Object.assign({}, options || {}, { signal: controller.signal }));
+                clearTimeout(timeoutId);
+                return response;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') throw new Error('Request timed out');
+                throw error;
+            }
+        }
+
+        async function verifyToken(token) {
+            try {
+                var response = await safeFetch(CONFIG.apiEndpoint + '/admin/verify', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                var data = await response.json();
+                if (data.valid) {
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('adminDashboard').classList.remove('hidden');
+                    loadOverview();
+                    loadConfig();
+                }
+            } catch (error) {
+                sessionStorage.removeItem('adminToken');
+            }
+        }
+
+        async function login() {
+            var password = document.getElementById('password').value;
+            var errorEl = document.getElementById('loginError');
+
+            if (!password) { errorEl.textContent = 'Password is required'; errorEl.classList.remove('hidden'); return; }
+
+            try {
+                var response = await safeFetch(CONFIG.apiEndpoint + '/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: password })
+                });
+                var data = await response.json();
+
+                if (data.token) {
+                    sessionStorage.setItem('adminToken', data.token);
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('adminDashboard').classList.remove('hidden');
+                    loadOverview();
+                    loadConfig();
+                } else {
+                    errorEl.textContent = 'Invalid password'; errorEl.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorEl.textContent = 'Login failed'; errorEl.classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('adminToken');
+            window.location.reload();
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+            document.querySelectorAll('.nav-item').forEach(function(el) { el.classList.remove('active'); });
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector('[data-tab="' + tabName + '"]').classList.add('active');
+
+            if (tabName === 'overview') loadOverview();
+            if (tabName === 'creators') loadCreators();
+            if (tabName === 'videos') loadVideos();
+            if (tabName === 'shorts') loadShorts();
+            if (tabName === 'iframes') loadIframes();
+            if (tabName === 'reports') loadReports();
+        }
+
+        function getAuthHeaders() {
+            return { 'Authorization': 'Bearer ' + sessionStorage.getItem('adminToken'), 'Content-Type': 'application/json' };
+        }
+
+        async function loadOverview() {
+            try {
+                var response = await safeFetch(CONFIG.apiEndpoint + '/admin/stats', { headers: getAuthHeaders() });
+                var data = await response.json();
+
+                document.getElementById('totalVideos').textContent = formatNumber(data.overview.totalVideos);
+                document.getElementById('totalShorts').textContent = formatNumber(data.overview.totalShorts);
+                document.getElementById('totalIframes').textContent = formatNumber(data.overview.totalIframes);
+                document.getElementById('totalCreators').textContent = formatNumber(data.overview.totalCreators);
+                document.getElementById('totalViews').textContent = formatNumber(data.overview.totalViews);
+                document.getElementById('pendingReports').textContent = formatNumber(data.overview.pendingReports);
+
+                var badge = document.getElementById('reportsBadge');
+                if (data.overview.pendingReports > 0) { badge.textContent = data.overview.pendingReports; badge.classList.remove('hidden'); }
+                else { badge.classList.add('hidden'); }
+
+                // Uploads Chart
+                var uCtx = document.getElementById('uploadsChart').getContext('2d');
+                if (uploadsChartInstance) uploadsChartInstance.destroy();
+                uploadsChartInstance = new Chart(uCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: (data.dailyStats || []).slice(-14).map(function(d) { return d.date; }),
+                        datasets: [{ label: 'Videos Uploaded', data: (data.dailyStats || []).slice(-14).map(function(d) { return d.count; }), backgroundColor: '#ff0050', borderRadius: 4 }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#333' }, ticks: { color: '#888' } }, x: { grid: { display: false }, ticks: { color: '#888' } } } }
+                });
+
+                // Shorts Chart
+                var sCtx = document.getElementById('shortsChart').getContext('2d');
+                if (shortsChartInstance) shortsChartInstance.destroy();
+                shortsChartInstance = new Chart(sCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: (data.dailyShortStats || []).slice(-14).map(function(d) { return d.date; }),
+                        datasets: [{ label: 'Shorts Uploaded', data: (data.dailyShortStats || []).slice(-14).map(function(d) { return d.count; }), backgroundColor: '#00f2ea', borderRadius: 4 }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#333' }, ticks: { color: '#888' } }, x: { grid: { display: false }, ticks: { color: '#888' } } } }
+                });
+            } catch (error) {}
+        }
+
+        async function loadConfig() {
+            try {
+                var response = await safeFetch(CONFIG.apiEndpoint + '/config');
+                var config = await response.json();
+
+                document.getElementById('configSiteName').value = config.siteName || '';
+                document.getElementById('configPrimaryColor').value = config.primaryColor || '#ff0050';
+                document.getElementById('configPrimaryColorText').value = config.primaryColor || '#ff0050';
+                document.getElementById('configSiteLogo').value = config.siteLogo || '';
+                document.getElementById('configSiteLogoSvg').value = config.siteLogoSvg || '';
+                document.getElementById('configFaviconUrl').value = config.faviconUrl || '';
+                document.getElementById('configSiteDescription').value = config.siteDescription || '';
+                document.getElementById('configR2PublicUrl').value = config.r2PublicUrl || '';
+                document.getElementById('configVastTagUrl').value = config.vastTagUrl || '';
+                document.getElementById('configPlacementUrls').value = config.placementUrls || '[]';
+                document.getElementById('configOutstreamAdTags').value = config.outstreamAdTags || '[]';
+                document.getElementById('configRegistrationEnabled').checked = config.registrationEnabled !== false;
+            } catch (error) {}
+        }
+
+        async function saveConfig() {
+            var messageEl = document.getElementById('configMessage');
+            messageEl.classList.add('hidden');
+
+            try {
+                var configData = {
+                    siteName: document.getElementById('configSiteName').value,
+                    primaryColor: document.getElementById('configPrimaryColor').value,
+                    siteLogo: document.getElementById('configSiteLogo').value,
+                    siteLogoSvg: document.getElementById('configSiteLogoSvg').value,
+                    faviconUrl: document.getElementById('configFaviconUrl').value,
+                    siteDescription: document.getElementById('configSiteDescription').value,
+                    r2PublicUrl: document.getElementById('configR2PublicUrl').value,
+                    vastTagUrl: document.getElementById('configVastTagUrl').value,
+                    placementUrls: document.getElementById('configPlacementUrls').value,
+                    outstreamAdTags: document.getElementById('configOutstreamAdTags').value,
+                    registrationEnabled: document.getElementById('configRegistrationEnabled').checked
+                };
+
+                var response = await safeFetch(CONFIG.apiEndpoint + '/admin/config', {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(configData)
+                });
+                var data = await response.json();
+
+                if (data.success) {
+                    messageEl.textContent = 'Configuration saved successfully!';
+                    messageEl.className = 'text-center text-sm text-success mt-4';
+                    messageEl.classList.remove('hidden');
+                    siteConfig = configData;
+                } else {
+                    throw new Error(data.error || 'Failed to save');
+                }
+            } catch (error) {
+                messageEl.textContent = 'Error: ' + (error.message || 'Failed to save configuration');
+                messageEl.className = 'text-center text-sm text-danger mt-4';
+                messageEl.classList.remove('hidden');
+            }
+        }
+
+        async function loadCreators() {
+            var status = document.getElementById('creatorFilter').value;
+            try {
+                var response = await safeFetch(CONFIG.apiEndpoint + '/admin/creators?status=' + encodeURIComponent(status), { headers: getAuthHeaders() });
+                var creators = await response.json();
+
+                var tbody = document.getElementById('creatorsTable');
+                tbody.innerHTML = '';
+
+                creators.forEach(function(creator) {
+                    var tr = document.createElement('tr');
+                    tr.className = 'table-row border-b border-border';
+
+                    var statusColors = { approved: 'bg-success/20 text-success', pending: 'bg-warning/20 text-warning', rejected: 'bg-danger/20 text-danger', suspended: 'bg-danger/20 text-danger' };
+                    var statusClass = statusColors[creator.status] || 'bg-muted/20 text-muted';
+
+                    tr.innerHTML = '<td class="px-4 py-3">' +
+                        '<div class="font-medium">' + escapeHtml(creator.username || 'Unknown') + '</div>' +
+                        '<div class="text-sm text-muted">' + escapeHtml(creator.email || '') + '</div></td>' +
+                        '<td class="px-4 py-3"><span class="status-badge ' + statusClass + '">' + (creator.status || 'unknown') + '</span></td>' +
+                        '<td class="px-4 py-3 text-sm text-muted">' + (creator.videoCount || 0) + ' videos<br>' + (creator.shortCount || 0) + ' shorts</td>' +
+                        '<td class="px-4 py-3 text-sm text-muted">' + formatRelativeTime(creator.createdAt) + '</td>' +
+                        '<td class="px-4 py-3"><div class="flex gap-2">' +
+                        (creator.status === 'pending' ? '<button onclick="updateCreatorStatus(' + creator.id + ', \'approved\')" class="px-3 py-1 bg-success/20 text-success rounded-lg text-sm hover:bg-success/30 transition-colors">Approve</button>' : '') +
+                        (creator.status === 'pending' ? '<button onclick="updateCreatorStatus(' + creator.id + ', \'rejected\')" class="px-3 py-1 bg-danger/20 text-danger rounded-lg text-sm hover:bg-danger/30 transition-colors">Reject</button>' : '') +
+                        (creator.status === 'approved' ? '<button onclick="updateCreatorStatus(' + creator.id + ', \'suspended\')" class="px-3 py-1 bg-danger/20 text-danger rounded-lg text-sm hover:bg-danger/30 transition-colors">Suspend</button>' : '') +
+                        (creator.status === 'suspended' || creator.status === 'rejected' ? '<button onclick="updateCreatorStatus(' + creator.id + ', \'approved\')" class="px-3 py-1 bg-success/20 text-success rounded-lg text-sm hover:bg-success/30 transition-colors">Reinstate</button>' : '') +
+                        '</div></td>';
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {}
+        }
+
+        async function updateCreatorStatus(creatorId, status) {
+            try {
+                await safeFetch(CONFIG.apiEndpoint + '/admin/creator/status', {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ creatorId: creatorId, status: status })
+                });
+                loadCreators();
+            } catch (error) {}
+        }
+
+        async function loadVideos() {
+            var filter = document.getElementById('videoFilter').value;
+            try {
+                var response = await safeFetch(CONFIG.apiEndpoint + '/admin/videos?filter=' + encodeURIComponent(filter), { headers: getAuthHeaders() });
+                var data = await response.json();
+                var videos = data.videos || [];
+
+                var tbody = document.getElementById('videosTable');
+                tbody.innerHTML = '';
+
+                videos.forEach(function(video) {
+                    var tr = document.createElement('tr');
+                    tr.className = 'table-row border-b border-border';
+                    tr.innerHTML = '<td class="px-4 py-3">' +
+                        '<div class="font-medium">' + escapeHtml(video.title || 'Untitled') + '</div>' +
+                        '<div class="text-xs text-muted">' + (video.category || 'uncategorized') + '</div></td>' +
+                        '<td class="px-4 py-3 text-sm">' + formatNumber(video.views || 0) + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-muted">' + escapeHtml(video.creatorName || 'Unknown') + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-muted">' + formatRelativeTime(video.addedAt) + '</td>' +
+                        '<td class="px-4 py-3"><div class="flex gap-2">' +
+                        '<button onclick="deleteVideo(\'' + (video.numericId || video.id) + '\')" class="px-3 py-1 bg-danger/20 text-danger rounded-lg text-sm hover:bg-danger/30 transition-colors"><i class="fas fa-trash"></i></button>' +
+                        '</div></td>';
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {}
+        }
+
+        async function deleteVideo(id) {
+            if (!confirm('Are you sure you want to remove this video?')) return;
+            try {
+                await safeFetch(CONFIG.apiEndpoint + '/admin/video/delete', {
+                    method: 'DELETE',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ id: id })
+                });
+                loadVideos();
+            } catch (error) {}
+        }
+
+        async function loadShorts() {
+            var filter = document.getElementById('shortFilter').value;
+            try {
+                var response = await safeFetch(CONFIG.apiEndpoint + '/admin/shorts?filter=' + encodeURIComponent(filter), { headers: getAuthHeaders() });
+                var data = await response.json();
+                var shorts = data.shorts || [];
+
+                var tbody = document.getElementById('shortsTable');
+                tbody.innerHTML = '';
+
+                shorts.forEach(function(short) {
+                    var tr = document.createElement('tr');
+                    tr.className = 'table-row border-b border-border';
+                    tr.innerHTML = '<td class="px-4 py-3">' +
+                        '<div class="font-medium">' + escapeHtml(short.title || 'Untitled') + '</div>' +
+                        '<div class="text-xs text-muted">' + (short.category || 'uncategorized') + '</div></td>' +
+                        '<td class="px-4 py-3 text-sm">' + formatNumber(short.views || 0) + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-muted">' + escapeHtml(short.creatorName || 'Unknown') + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-muted">' + formatRelativeTime(short.addedAt) + '</td>' +
+                        '<td class="px-4 py-3"><div class="flex gap-2">' +
+                        '<button onclick="deleteShort(\'' + (short.numericId || short.id) + '\')" class="px-3 py-1 bg-danger/20 text-danger rounded-lg text-sm hover:bg-danger/30 transition-colors"><i class="fas fa-trash"></i></button>' +
+                        '</div></td>';
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {}
+        }
+
+        async function deleteShort(id) {
+            if (!confirm('Are you sure you want to remove this short?')) return;
+            try {
+                await safeFetch(CONFIG.apiEndpoint + '/admin/short/delete', {
+                    method: 'DELETE',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ id: id })
+                });
+                loadShorts();
+            } catch (error) {}
+        }
+
+        async function loadIframes() {
+            try {
+                var response = await safeFetch(CONFIG.apiEndpoint + '/admin/iframes', { headers: getAuthHeaders() });
+                var videos = await response.json();
+
+                var tbody = document.getElementById('iframesTable');
+                tbody.innerHTML = '';
+
+                videos.forEach(function(video) {
+                    var tr = document.createElement('tr');
+                    tr.className = 'table-row border-b border-border';
+                    tr.innerHTML = '<td class="px-4 py-3">' +
+                        '<div class="font-medium">' + escapeHtml(video.title || 'Untitled') + '</div></td>' +
+                        '<td class="px-4 py-3 text-sm"><a href="' + escapeHtml(video.videoUrl || '') + '" target="_blank" class="text-primary hover:underline">' + escapeHtml(video.videoUrl || '').substring(0, 50) + '...</a></td>' +
+                        '<td class="px-4 py-3 text-sm text-muted">' + escapeHtml(video.creatorName || 'Unknown') + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-muted">' + formatRelativeTime(video.addedAt) + '</td>' +
+                        '<td class="px-4 py-3"><div class="flex gap-2">' +
+                        '<button onclick="deleteVideo(\'' + (video.numericId || video.id) + '\')" class="px-3 py-1 bg-danger/20 text-danger rounded-lg text-sm hover:bg-danger/30 transition-colors"><i class="fas fa-trash"></i></button>' +
+                        '</div></td>';
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {}
+        }
+
+        async function loadReports() {
+            var status = document.getElementById('reportFilter').value;
+            try {
+                var response = await safeFetch(CONFIG.apiEndpoint + '/admin/reports?status=' + encodeURIComponent(status), { headers: getAuthHeaders() });
+                var reports = await response.json();
+
+                var tbody = document.getElementById('reportsTable');
+                tbody.innerHTML = '';
+
+                reports.forEach(function(report) {
+                    var tr = document.createElement('tr');
+                    tr.className = 'table-row border-b border-border';
+
+                    var statusColors = { pending: 'bg-warning/20 text-warning', resolved: 'bg-success/20 text-success', dismissed: 'bg-muted/20 text-muted' };
+                    var statusClass = statusColors[report.status] || 'bg-muted/20 text-muted';
+
+                    tr.innerHTML = '<td class="px-4 py-3 text-sm font-medium">#' + (report.id || '?') + '</td>' +
+                        '<td class="px-4 py-3"><div class="font-medium">' + escapeHtml(report.contentTitle || 'Unknown') + '</div><div class="text-xs text-muted">' + (report.contentType || 'video') + '</div></td>' +
+                        '<td class="px-4 py-3"><div class="font-medium">' + escapeHtml(report.reason || '') + '</div><div class="text-xs text-muted">' + escapeHtml((report.details || '').substring(0, 50)) + '</div></td>' +
+                        '<td class="px-4 py-3"><span class="status-badge ' + statusClass + '">' + (report.status || 'pending') + '</span></td>' +
+                        '<td class="px-4 py-3 text-sm text-muted">' + formatRelativeTime(report.createdAt) + '</td>' +
+                        '<td class="px-4 py-3"><div class="flex gap-2">' +
+                        (report.status === 'pending' ? '<button onclick="resolveReport(' + report.id + ')" class="px-3 py-1 bg-success/20 text-success rounded-lg text-sm hover:bg-success/30 transition-colors">Resolve</button>' : '') +
+                        '<button onclick="deleteReport(' + report.id + ')" class="px-3 py-1 bg-danger/20 text-danger rounded-lg text-sm hover:bg-danger/30 transition-colors"><i class="fas fa-trash"></i></button>' +
+                        '</div></td>';
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {}
+        }
+
+        async function resolveReport(reportId) {
+            try {
+                await safeFetch(CONFIG.apiEndpoint + '/admin/report/status', {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ reportId: reportId, status: 'resolved' })
+                });
+                loadReports();
+            } catch (error) {}
+        }
+
+        async function deleteReport(reportId) {
+            if (!confirm('Delete this report permanently?')) return;
+            try {
+                await safeFetch(CONFIG.apiEndpoint + '/admin/report/delete', {
+                    method: 'DELETE',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ id: reportId })
+                });
+                loadReports();
+            } catch (error) {}
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            var div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function formatNumber(num) {
+            if (!num || isNaN(num)) return '0';
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+
+        function formatRelativeTime(dateString) {
+            if (!dateString) return 'Recently';
+            var date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'Recently';
+            var now = new Date();
+            var diff = Math.floor((now - date) / 1000);
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) { var m = Math.floor(diff / 60); return m + ' min' + (m > 1 ? 's' : '') + ' ago'; }
+            if (diff < 86400) { var h = Math.floor(diff / 3600); return h + ' hr' + (h > 1 ? 's' : '') + ' ago'; }
+            if (diff < 604800) { var d = Math.floor(diff / 86400); return d + ' day' + (d > 1 ? 's' : '') + ' ago'; }
+            if (diff < 2592000) { var w = Math.floor(diff / 604800); return w + ' week' + (w > 1 ? 's' : '') + ' ago'; }
+            if (diff < 31536000) { var mo = Math.floor(diff / 2592000); return mo + ' mo' + (mo > 1 ? 's' : '') + ' ago'; }
+            var y = Math.floor(diff / 31536000);
+            return y + ' yr' + (y > 1 ? 's' : '') + ' ago';
+        }
+    </script>
+</body>
+</html>

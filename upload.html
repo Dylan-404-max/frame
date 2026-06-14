@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#0a0a0a">
+
+    <!-- Security: Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.fluidplayer.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.fluidplayer.com; img-src * data: blob:; media-src * blob:; connect-src *; font-src https://cdnjs.cloudflare.com; frame-src *; object-src 'none'; base-uri 'self';">
+    <!-- Security: Prevent iframe embedding (Clickjacking) -->
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <!-- Security: Referrer Policy -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <title id="pageTitle">Creator Studio - Xplitleaks</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Site Config -->
+    <script src="site-config.js"></script>
+
+    <style>
+        :root {
+            --primary: #ff0050;
+            --primary-hover: #ff3370;
+            --primary-light: rgba(255,0,80,0.1);
+            --secondary: #00f2ea;
+            --bg-body: #0a0a0a;
+            --bg-card: #1a1a1a;
+            --bg-elevated: #222222;
+            --border: #333333;
+            --border-light: #444444;
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --text-dim: #555555;
+            --success: #00ff88;
+            --error: #ff4444;
+            --warning: #ffc107;
+            --info: #00f2ea;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Auth Screen */
+        .auth-screen {
+            position: fixed; inset: 0; background: var(--bg-body);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999; padding: 20px;
+        }
+        .auth-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 2rem;
+            width: 100%; max-width: 420px; text-align: center; box-shadow: var(--shadow);
+        }
+        .auth-logo {
+            font-size: 2rem; font-weight: bold;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin-bottom: 0.5rem;
+        }
+        .auth-subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
+        .auth-tabs { display: flex; gap: 0.25rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); padding: 4px; border-radius: var(--radius-sm); }
+        .auth-tab { flex: 1; padding: 0.75rem; border: none; background: transparent; color: var(--text-muted); border-radius: var(--radius-sm); cursor: pointer; font-weight: 500; font-size: 0.9rem; transition: all 0.2s; }
+        .auth-tab.active { background: var(--primary); color: white; }
+
+        .form-group { margin-bottom: 1rem; text-align: left; }
+        .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 500; }
+        .form-group label .required { color: var(--primary); margin-left: 2px; }
+        .form-control {
+            width: 100%; padding: 0.875rem 1rem; background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border); color: var(--text-main);
+            border-radius: var(--radius-sm); font-size: 1rem; transition: all 0.2s;
+        }
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(255,0,80,0.1); }
+        select.form-control { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+        select.form-control option { background: var(--bg-card); color: var(--text-main); }
+
+        .btn {
+            width: 100%; padding: 0.875rem; background: var(--primary); color: white;
+            border: none; border-radius: var(--radius-sm); font-size: 1rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* App Header */
+        .app-header { position: sticky; top: 0; z-index: 100; background: rgba(10,10,10,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+        .header-inner { max-width: 1400px; margin: 0 auto; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .logo {
+            font-size: 1.4rem; font-weight: bold;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; text-decoration: none; animation: gradient 3s ease infinite;
+            background-size: 200% 200%;
+        }
+        @keyframes gradient { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        .header-actions { display: flex; align-items: center; gap: 8px; }
+        .header-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; }
+        .header-btn:hover { background: var(--primary); border-color: var(--primary); }
+        .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; color: white; }
+
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,10,0.95); backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.7rem; transition: color 0.2s; }
+        .nav-item i { font-size: 1.3rem; }
+        .nav-item.active { color: var(--primary); }
+        @media (min-width: 1024px) { .bottom-nav { display: none; } }
+
+        /* Sidebar */
+        .sidebar { display: none; }
+        @media (min-width: 1024px) {
+            .sidebar { display: flex; flex-direction: column; gap: 4px; width: 240px; padding: 16px; position: fixed; left: 0; top: 65px; bottom: 0; overflow-y: auto; }
+            .sidebar-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--radius-sm); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.95rem; transition: all 0.2s; text-align: left; }
+            .sidebar-item:hover { background: rgba(255,255,255,0.03); color: var(--text-main); }
+            .sidebar-item.active { background: var(--primary-light); color: var(--primary); font-weight: 500; }
+            .sidebar-item i { font-size: 1.2rem; width: 24px; text-align: center; }
+            .sidebar-divider { height: 1px; background: var(--border); margin: 8px 0; }
+            .sidebar-label { padding: 8px 16px; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); font-weight: 600; letter-spacing: 0.5px; }
+        }
+
+        /* Main Layout */
+        .app-container { display: none; max-width: 1400px; margin: 0 auto; padding-bottom: 80px; }
+        .app-container.active { display: block; }
+        @media (min-width: 1024px) { .app-container { margin-left: 240px; padding: 24px; padding-bottom: 24px; } }
+        .main-content { max-width: 900px; margin: 0 auto; }
+
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .section-title { font-size: 1.3rem; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; padding: 0 16px; }
+        @media (min-width: 1024px) { .section-title { padding: 0; } }
+        .section-title i { color: var(--primary); }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; padding: 0 16px; }
+        @media (min-width: 640px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (min-width: 1024px) { .stats-grid { padding: 0; } }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 12px; }
+        .stat-icon { width: 44px; height: 44px; border-radius: var(--radius-sm); background: var(--primary-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .stat-icon i { color: var(--primary); font-size: 1.2rem; }
+        .stat-info { min-width: 0; }
+        .stat-value { font-size: 1.4rem; font-weight: 700; color: var(--text-main); line-height: 1.2; }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); }
+        .chart-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+        .chart-card h3 { font-size: 1rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .chart-card h3 i { color: var(--primary); }
+        .chart-container { position: relative; height: 250px; }
+
+        /* Upload Section */
+        .upload-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin: 0 16px 20px; overflow: hidden; }
+        @media (min-width: 1024px) { .upload-card { margin: 0 0 20px; } }
+        .upload-card-header { padding: 20px 24px; border-bottom: 1px solid var(--border); background: var(--bg-elevated); }
+        .upload-card-header h3 { font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
+        .upload-card-header h3 i { color: var(--primary); }
+        .upload-card-body { padding: 24px; }
+
+        .type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+        .type-option { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 20px 12px; background: rgba(255,255,255,0.02); border: 2px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: all 0.2s; text-align: center; }
+        .type-option:hover { border-color: var(--border-light); }
+        .type-option.active { border-color: var(--primary); background: var(--primary-light); }
+        .type-option i { font-size: 1.8rem; color: var(--primary); }
+        .type-option .type-name { font-size: 0.9rem; font-weight: 500; }
+        .type-option .type-desc { font-size: 0.75rem; color: var(--text-muted); }
+
+        .upload-area { border: 2px dashed var(--border); border-radius: var(--radius); padding: 40px 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.01); position: relative; }
+        .upload-area:hover { border-color: var(--primary); background: rgba(255,0,80,0.02); }
+        .upload-area.dragover { border-color: var(--primary); background: rgba(255,0,80,0.05); }
+        .upload-area.has-file { border-color: var(--success); background: rgba(0,255,136,0.03); }
+        .upload-area i { font-size: 3rem; color: var(--text-muted); margin-bottom: 12px; transition: color 0.2s; }
+        .upload-area:hover i { color: var(--primary); }
+        .upload-area p { color: var(--text-muted); font-size: 0.95rem; }
+        .upload-area .file-name { color: var(--text-main); font-weight: 600; margin-bottom: 4px; }
+        .upload-area .file-size { font-size: 0.8rem; color: var(--text-muted); }
+
+        .thumb-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+        @media (min-width: 640px) { .thumb-gallery { grid-template-columns: repeat(5, 1fr); } }
+        .thumb-option { position: relative; aspect-ratio: 16/9; border-radius: var(--radius-sm); overflow: hidden; cursor: pointer; border: 2px solid var(--border); transition: all 0.2s; }
+        .thumb-option:hover { border-color: var(--border-light); }
+        .thumb-option.selected { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(255,0,80,0.3); }
+        .thumb-option img { width: 100%; height: 100%; object-fit: cover; }
+        .thumb-check { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+        .thumb-option.selected .thumb-check { opacity: 1; }
+        .thumb-check i { font-size: 0.7rem; color: white; }
+        .thumb-label { position: absolute; bottom: 0; left: 0; right: 0; padding: 4px 6px; background: rgba(0,0,0,0.7); font-size: 0.65rem; color: var(--text-muted); text-align: center; }
+
+        .iframe-section { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 20px; margin-bottom: 20px; }
+        .iframe-section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .iframe-section-header i { color: var(--secondary); }
+        .iframe-section-header h4 { font-size: 0.95rem; }
+        .iframe-input-wrapper { display: flex; gap: 8px; }
+        .iframe-input-wrapper input { flex: 1; }
+        .iframe-preview { margin-top: 16px; aspect-ratio: 16/9; background: #000; border-radius: var(--radius-sm); overflow: hidden; display: none; }
+        .iframe-preview.active { display: block; }
+        .iframe-preview iframe { width: 100%; height: 100%; border: none; }
+
+        .progress-container { margin-top: 16px; display: none; }
+        .progress-container.active { display: block; }
+        .progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; transition: width 0.3s ease; border-radius: 3px; }
+        .progress-text { display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.85rem; color: var(--text-muted); }
+
+        /* Tags Input */
+        .tags-input-container { position: relative; }
+        .tags-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .tag-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--primary-light); color: var(--primary); border-radius: 20px; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .tag-chip:hover { background: rgba(255,0,80,0.2); }
+        .tag-chip.selected { background: var(--primary); color: white; }
+        .tag-chip .remove-tag { font-size: 0.7rem; opacity: 0.7; }
+        .tag-chip.selected .remove-tag { opacity: 1; }
+
+        .tag-input-wrapper { display: flex; gap: 8px; margin-top: 8px; }
+        .tag-input-wrapper input { flex: 1; }
+
+        /* Content Grid */
+        .content-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+        @media (min-width: 1024px) { .content-toolbar { padding: 0; } }
+        .toolbar-left { display: flex; align-items: center; gap: 8px; }
+        .batch-bar { display: none; align-items: center; gap: 10px; padding: 0 16px; margin-bottom: 12px; }
+        .batch-bar.active { display: flex; }
+        .batch-btn { padding: 8px 16px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+        .batch-btn:hover { color: var(--text-main); border-color: var(--border-light); }
+        .batch-btn.danger:hover { border-color: var(--error); color: var(--error); }
+
+        .content-grid { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 0 16px; }
+        @media (min-width: 640px) { .content-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1024px) { .content-grid { padding: 0; grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1280px) { .content-grid { grid-template-columns: repeat(3, 1fr); } }
+        .content-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: all 0.2s; position: relative; }
+        .content-card:hover { border-color: var(--border-light); transform: translateY(-2px); box-shadow: var(--shadow); }
+        .content-card.selected { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(255,0,80,0.2); }
+        .card-select { position: absolute; top: 10px; left: 10px; z-index: 5; width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); background: rgba(0,0,0,0.4); cursor: pointer; display: none; align-items: center; justify-content: center; transition: all 0.2s; }
+        .content-card.selectable .card-select { display: flex; }
+        .content-card.selected .card-select { background: var(--primary); border-color: var(--primary); }
+        .card-select i { font-size: 0.65rem; color: white; opacity: 0; }
+        .content-card.selected .card-select i { opacity: 1; }
+        .card-thumbnail { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: #222; display: block; }
+        .card-body { padding: 14px; }
+        .card-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-meta { display: flex; align-items: center; gap: 12px; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; flex-wrap: wrap; }
+        .card-actions { display: flex; gap: 8px; padding: 0 14px 14px; }
+        .card-btn { flex: 1; padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; text-decoration: none; }
+        .card-btn:hover { background: rgba(255,255,255,0.03); color: var(--text-main); border-color: var(--border-light); }
+        .card-btn.delete:hover { border-color: var(--error); color: var(--error); background: rgba(255,68,68,0.05); }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); grid-column: 1 / -1; }
+        .empty-state i { font-size: 3rem; margin-bottom: 16px; color: var(--text-dim); }
+        .empty-state h3 { color: var(--text-main); margin-bottom: 8px; }
+
+        /* Confirm Modal */
+        .modal-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 400px; text-align: center; }
+        .modal-box .warning-icon { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,68,68,0.1); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+        .modal-box .warning-icon i { font-size: 1.5rem; color: var(--error); }
+        .modal-box h3 { margin-bottom: 8px; }
+        .modal-box p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; }
+        .modal-actions { display: flex; gap: 10px; }
+        .modal-actions .btn { flex: 1; }
+        .modal-actions .btn-cancel { background: transparent; border: 1px solid var(--border); }
+        .modal-actions .btn-cancel:hover { background: rgba(255,255,255,0.03); }
+        .modal-actions .btn-danger { background: var(--error); }
+        .modal-actions .btn-danger:hover { background: #ff6666; }
+
+        /* Toasts */
+        .toast-container { position: fixed; top: 80px; right: 16px; z-index: 10000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+        .toast { background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--primary); padding: 14px 20px; border-radius: var(--radius-sm); box-shadow: var(--shadow); animation: slideIn 0.3s ease; min-width: 300px; max-width: 400px; pointer-events: auto; font-size: 0.9rem; display: flex; align-items: center; gap: 10px; }
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--error); }
+        .toast.warning { border-left-color: var(--warning); }
+        .toast.info { border-left-color: var(--info); }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+
+        footer { background: var(--bg-body); border-top: 1px solid var(--border); padding: 32px 20px; margin-top: 40px; text-align: center; color: var(--text-muted); font-size: 0.85rem; }
+        @media (max-width: 1023px) { footer { margin-bottom: 80px; } }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Auth Screen -->
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-card">
+            <div class="auth-logo" id="authLogo">Xplitleaks</div>
+            <p class="auth-subtitle">Creator Studio</p>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+                <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+            </div>
+
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label>Email or Username</label>
+                    <input type="text" id="loginEmail" class="form-control" placeholder="Enter email or username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" class="form-control" placeholder="Enter password" required>
+                </div>
+                <button type="submit" class="btn"><i class="fas fa-sign-in-alt"></i> Login</button>
+            </form>
+
+            <form id="signupForm" class="auth-form hidden">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="signupUsername" class="form-control" placeholder="Choose a username" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signupEmail" class="form-control" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" class="form-control" placeholder="Create a password" required>
+                </div>
+                <button type="submit" class="btn"><i class="fas fa-user-plus"></i> Create Account</button>
+                <p class="text-muted text-sm mt-4"><i class="fas fa-info-circle"></i> Your account will need admin approval before you can upload.</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- App -->
+    <div id="mainApp" class="app-container">
+        <header class="app-header">
+            <div class="header-inner">
+                <a href="index.html" class="logo" id="appLogo">Xplitleaks</a>
+                <div class="header-actions">
+                    <a href="index.html" class="header-btn" title="Home"><i class="fas fa-home"></i></a>
+                    <div class="user-avatar" id="userAvatar">U</div>
+                </div>
+            </div>
+        </header>
+
+        <nav class="sidebar">
+            <button class="sidebar-item active" onclick="switchSection('dashboard')"><i class="fas fa-chart-line"></i><span>Dashboard</span></button>
+            <button class="sidebar-item" onclick="switchSection('upload')"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
+            <button class="sidebar-item" onclick="switchSection('myVideos')"><i class="fas fa-video"></i><span>My Videos</span></button>
+            <button class="sidebar-item" onclick="switchSection('myShorts')"><i class="fas fa-mobile-alt"></i><span>My Shorts</span></button>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-label">Account</div>
+            <button class="sidebar-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
+        </nav>
+
+        <div class="main-content">
+
+            <!-- Dashboard Section -->
+            <section id="dashboardSection" class="section active">
+                <h2 class="section-title"><i class="fas fa-chart-line"></i> Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-video"></i></div>
+                        <div class="stat-info"><div class="stat-value" id="statVideos">0</div><div class="stat-label">Videos</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-mobile-alt"></i></div>
+                        <div class="stat-info"><div class="stat-value" id="statShorts">0</div><div class="stat-label">Shorts</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-eye"></i></div>
+                        <div class="stat-info"><div class="stat-value" id="statViews">0</div><div class="stat-label">Real Views</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-heart"></i></div>
+                        <div class="stat-info"><div class="stat-value" id="statLikes">0</div><div class="stat-label">Likes</div></div>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3><i class="fas fa-chart-area"></i> Views Over Time</h3>
+                    <div class="chart-container"><canvas id="viewsChart"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <h3><i class="fas fa-chart-pie"></i> Content Performance</h3>
+                    <div class="chart-container"><canvas id="performanceChart"></canvas></div>
+                </div>
+            </section>
+
+            <!-- Upload Section -->
+            <section id="uploadSection" class="section">
+                <h2 class="section-title"><i class="fas fa-cloud-upload-alt"></i> Upload Content</h2>
+
+                <div class="upload-card">
+                    <div class="upload-card-header">
+                        <h3><i class="fas fa-layer-group"></i> Choose Content Type</h3>
+                    </div>
+                    <div class="upload-card-body">
+                        <div class="type-grid">
+                            <div class="type-option active" onclick="selectType('video')" id="typeVideo">
+                                <i class="fas fa-video"></i>
+                                <span class="type-name">Video</span>
+                                <span class="type-desc">Long-form content</span>
+                            </div>
+                            <div class="type-option" onclick="selectType('short')" id="typeShort">
+                                <i class="fas fa-mobile-alt"></i>
+                                <span class="type-name">Short</span>
+                                <span class="type-desc">Vertical short-form</span>
+                            </div>
+                            <div class="type-option" onclick="selectType('iframe')" id="typeIframe">
+                                <i class="fas fa-globe"></i>
+                                <span class="type-name">Iframe</span>
+                                <span class="type-desc">Embed from web</span>
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="contentType" value="video">
+
+                        <!-- Common Fields -->
+                        <div class="form-group">
+                            <label>Title <span class="required">*</span></label>
+                            <input type="text" id="videoTitle" class="form-control" placeholder="Enter a catchy title..." required>
+                        </div>
+
+                        <!-- Category Selection -->
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select id="videoCategory" class="form-control"></select>
+                        </div>
+
+                        <!-- Tags Selection -->
+                        <div class="form-group">
+                            <label>Tags</label>
+                            <div class="tags-input-container">
+                                <div class="tags-list" id="availableTagsList"></div>
+                                <div class="tag-input-wrapper">
+                                    <input type="text" id="newTagInput" class="form-control" placeholder="Add new tag and press Enter">
+                                    <button type="button" class="btn" style="width:auto; padding: 0.5rem 1rem;" onclick="addNewTag()">Add</button>
+                                </div>
+                                <p class="text-muted text-sm mt-2" style="color:var(--text-muted); font-size:0.8rem;">
+                                    <i class="fas fa-info-circle"></i> Click to select existing tags. Type to create new ones.
+                                </p>
+                                <input type="hidden" id="videoTags" value="">
+                                <div class="tags-list" id="selectedTagsList" style="margin-top:8px;"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="descriptionGroup">
+                            <label>Description</label>
+                            <textarea id="videoDescription" class="form-control" rows="3" placeholder="Describe your content..."></textarea>
+                        </div>
+
+                        <div class="divider" style="height:1px; background:var(--border); margin:24px 0;"></div>
+
+                        <!-- Video Upload -->
+                        <div id="videoUploadSection">
+                            <div class="form-group">
+                                <label>Video File <span class="required">*</span></label>
+                                <div class="upload-area" id="videoUploadArea" onclick="document.getElementById('videoFile').click()">
+                                    <i class="fas fa-cloud-upload-alt" id="videoIcon"></i>
+                                    <p class="file-name" id="videoFileName">Click or drag video file here</p>
+                                    <p class="file-size" id="videoFileSize">MP4, MKV, WebM (Max 2GB)</p>
+                                    <input type="file" id="videoFile" class="hidden" accept="video/*" required>
+                                </div>
+
+                                <div class="progress-container" id="videoProgress">
+                                    <div class="progress-bar"><div class="progress-fill" id="videoProgressFill"></div></div>
+                                    <div class="progress-text">
+                                        <span id="videoProgressText">0%</span>
+                                        <span id="videoProgressStatus">Uploading...</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group" id="thumbGalleryGroup">
+                                <label>Choose Thumbnail <span style="color:var(--text-muted);">(select one)</span></label>
+                                <div class="thumb-gallery" id="thumbGallery"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Or upload custom thumbnail</label>
+                                <div class="upload-area" id="thumbUploadArea" onclick="document.getElementById('thumbFile').click()">
+                                    <i class="fas fa-image" id="thumbIcon"></i>
+                                    <p class="file-name" id="thumbFileName">Click or drag thumbnail</p>
+                                    <p class="file-size" id="thumbFileSize">JPG, PNG, WebP</p>
+                                    <input type="file" id="thumbFile" class="hidden" accept="image/*">
+                                </div>
+                                <div class="progress-container" id="thumbProgress">
+                                    <div class="progress-bar"><div class="progress-fill" id="thumbProgressFill"></div></div>
+                                    <div class="progress-text">
+                                        <span id="thumbProgressText">0%</span>
+                                        <span id="thumbProgressStatus">Uploading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Iframe Section -->
+                        <div id="iframeUploadSection" class="hidden">
+                            <div class="iframe-section">
+                                <div class="iframe-section-header">
+                                    <i class="fas fa-code"></i>
+                                    <h4>Embed Video from Another Site</h4>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>Video URL or Embed Code <span class="required">*</span></label>
+                                    <div class="iframe-input-wrapper">
+                                        <input type="text" id="iframeUrl" class="form-control" placeholder="https://example.com/embed/... or paste iframe src URL">
+                                    </div>
+                                    <p class="text-muted text-sm mt-2" style="color:var(--text-muted); font-size:0.8rem;">
+                                        <i class="fas fa-info-circle"></i> Paste the direct embed URL. Supports any site that provides iframe embeds.
+                                    </p>
+                                </div>
+                                <div class="iframe-preview" id="iframePreview">
+                                    <iframe id="iframePreviewFrame" allowfullscreen></iframe>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Thumbnail URL <span style="color:var(--text-muted);">(optional)</span></label>
+                                <input type="url" id="iframeThumbnail" class="form-control" placeholder="https://example.com/thumbnail.jpg">
+                            </div>
+                        </div>
+
+                        <button class="btn" id="uploadBtn" onclick="startUpload()">
+                            <i class="fas fa-upload"></i> Publish Content
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- My Videos Section -->
+            <section id="myVideosSection" class="section">
+                <h2 class="section-title"><i class="fas fa-video"></i> My Videos</h2>
+                <div class="content-toolbar">
+                    <div class="toolbar-left">
+                        <button class="batch-btn" onclick="toggleBatchMode('videos')"><i class="fas fa-check-square"></i> Select</button>
+                    </div>
+                </div>
+                <div class="batch-bar" id="videosBatchBar">
+                    <span id="videosSelectedCount" style="font-size:0.875rem; color:var(--text-muted);">0 selected</span>
+                    <button class="batch-btn danger" onclick="batchDelete('videos')"><i class="fas fa-trash"></i> Delete</button>
+                    <button class="batch-btn" onclick="cancelBatchMode('videos')"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+                <div id="videosGrid" class="content-grid">
+                    <div class="empty-state"><div class="loading-spinner" style="width:36px;height:36px;margin-bottom:16px;"></div><p>Loading videos...</p></div>
+                </div>
+            </section>
+
+            <!-- My Shorts Section -->
+            <section id="myShortsSection" class="section">
+                <h2 class="section-title"><i class="fas fa-mobile-alt"></i> My Shorts</h2>
+                <div class="content-toolbar">
+                    <div class="toolbar-left">
+                        <button class="batch-btn" onclick="toggleBatchMode('shorts')"><i class="fas fa-check-square"></i> Select</button>
+                    </div>
+                </div>
+                <div class="batch-bar" id="shortsBatchBar">
+                    <span id="shortsSelectedCount" style="font-size:0.875rem; color:var(--text-muted);">0 selected</span>
+                    <button class="batch-btn danger" onclick="batchDelete('shorts')"><i class="fas fa-trash"></i> Delete</button>
+                    <button class="batch-btn" onclick="cancelBatchMode('shorts')"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+                <div id="shortsGrid" class="content-grid">
+                    <div class="empty-state"><div class="loading-spinner" style="width:36px;height:36px;margin-bottom:16px;"></div><p>Loading shorts...</p></div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <nav class="bottom-nav" id="bottomNav">
+        <button class="nav-item active" onclick="switchSection('dashboard')" data-section="dashboard"><i class="fas fa-chart-line"></i><span>Dashboard</span></button>
+        <button class="nav-item" onclick="switchSection('upload')" data-section="upload"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
+        <button class="nav-item" onclick="switchSection('myVideos')" data-section="myVideos"><i class="fas fa-video"></i><span>Videos</span></button>
+        <button class="nav-item" onclick="switchSection('myShorts')" data-section="myShorts"><i class="fas fa-mobile-alt"></i><span>Shorts</span></button>
+    </nav>
+
+    <!-- Confirm Delete Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-box">
+            <div class="warning-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <h3>Delete Content?</h3>
+            <p id="deleteModalText">This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <footer>
+        <p> Xplitleaks Creator Studio. All rights reserved.</p>
+    </footer>
+
+    <!-- Site Config -->
+    <script src="site-config.js"></script>
+
+    <script>
+        // ===== Disable console on non-localhost =====
+        (function() {
+            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                console.log = function(){}; console.error = function(){}; console.warn = function(){};
+            }
+        })();
+
+        // ===== CONFIG =====
+        const CONFIG = {
+            apiEndpoint: (typeof SITE_CONFIG !== 'undefined') ? SITE_CONFIG.apiEndpoint : 'https://xplitleaks-api.dylancoral.workers.dev/api',
+            sessionId: sessionStorage.getItem('sessionId') || generateSessionId()
+        };
+        sessionStorage.setItem('sessionId', CONFIG.sessionId);
+
+        var currentUser = null;
+        var siteConfig = {};
+        var viewsChart = null;
+        var performanceChart = null;
+        var currentThumbnails = [];
+        var selectedThumbnailIndex = -1;
+        var batchMode = { videos: false, shorts: false };
+        var selectedItems = { videos: new Set(), shorts: new Set() };
+        var deleteCallback = null;
+
+        // ===== CATEGORIES & TAGS =====
+        var availableCategories = [];
+        var availableTags = [];
+        var selectedTags = [];
+
+        // ===== INIT =====
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadSiteConfig();
+            await loadCategoriesAndTags();
+            checkAuth();
+            setupDragDrop();
+            setupFileInputs();
+            setupIframePreview();
+            setupTagInput();
+        });
+
+        function generateSessionId() {
+            return 'sess_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        }
+
+        // ===== SAFE FETCH =====
+        async function safeFetch(url, options) {
+            if (!navigator.onLine) throw new Error('You are currently offline.');
+            var controller = new AbortController();
+            var timeoutId = setTimeout(function() { controller.abort(); }, 15000);
+            try {
+                var response = await fetch(url, Object.assign({}, options || {}, { signal: controller.signal }));
+                clearTimeout(timeoutId);
+                return response;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') throw new Error('Request timed out.');
+                throw error;
+            }
+        }
+
+        // ===== SITE CONFIG =====
+        async function loadSiteConfig() {
+            try {
+                var res = await safeFetch(CONFIG.apiEndpoint + '/config');
+                siteConfig = await res.json();
+                if (siteConfig.siteName) {
+                    document.getElementById('authLogo').textContent = siteConfig.siteName;
+                    document.getElementById('appLogo').textContent = siteConfig.siteName;
+                    document.getElementById('pageTitle').textContent = 'Creator Studio - ' + siteConfig.siteName;
+                }
+                if (siteConfig.primaryColor) {
+                    document.documentElement.style.setProperty('--primary', siteConfig.primaryColor);
+                }
+            } catch (e) {}
+        }
+
+        // ===== LOAD CATEGORIES & TAGS =====
+        async function loadCategoriesAndTags() {
+            try {
+                var res = await safeFetch(CONFIG.apiEndpoint + '/categories');
+                var data = await res.json();
+                availableCategories = data.categories || [];
+                availableTags = data.tags || [];
+                renderCategorySelect();
+                renderTagsList();
+            } catch (e) {
+                // Fallback categories
+                availableCategories = [
+                    { id: 'amateur', name: 'Amateur' },
+                    { id: 'teen', name: 'Teen' },
+                    { id: 'mature', name: 'Mature' },
+                    { id: 'interracial', name: 'Interracial' },
+                    { id: 'anal', name: 'Anal' },
+                    { id: 'lesbian', name: 'Lesbian' },
+                    { id: 'homemade', name: 'Homemade' },
+                    { id: 'bbc', name: 'BBC' },
+                    { id: 'other', name: 'Other' }
+                ];
+                renderCategorySelect();
+            }
+        }
+
+        function renderCategorySelect() {
+            var select = document.getElementById('videoCategory');
+            if (!select) return;
+            select.innerHTML = '';
+            availableCategories.forEach(function(cat) {
+                var option = document.createElement('option');
+                option.value = cat.id || cat.name;
+                option.textContent = cat.name;
+                select.appendChild(option);
+            });
+        }
+
+        function renderTagsList() {
+            var container = document.getElementById('availableTagsList');
+            if (!container) return;
+            container.innerHTML = '';
+            availableTags.forEach(function(tag) {
+                var chip = createTagChip(tag.name || tag);
+                container.appendChild(chip);
+            });
+            renderSelectedTags();
+        }
+
+        function createTagChip(tagName) {
+            var chip = document.createElement('span');
+            chip.className = 'tag-chip' + (selectedTags.indexOf(tagName) !== -1 ? ' selected' : '');
+            chip.textContent = tagName;
+            chip.onclick = function() { toggleTagSelection(tagName); };
+            return chip;
+        }
+
+        function toggleTagSelection(tagName) {
+            var idx = selectedTags.indexOf(tagName);
+            if (idx !== -1) {
+                selectedTags.splice(idx, 1);
+            } else {
+                selectedTags.push(tagName);
+            }
+            document.getElementById('videoTags').value = selectedTags.join(',');
+            renderTagsList();
+        }
+
+        function renderSelectedTags() {
+            var container = document.getElementById('selectedTagsList');
+            if (!container) return;
+            container.innerHTML = '';
+            if (selectedTags.length === 0) return;
+            var label = document.createElement('span');
+            label.style.cssText = 'font-size:0.8rem; color:var(--text-muted); width:100%; margin-bottom:4px;';
+            label.textContent = 'Selected:';
+            container.appendChild(label);
+            selectedTags.forEach(function(tagName) {
+                var chip = document.createElement('span');
+                chip.className = 'tag-chip selected';
+                chip.innerHTML = escapeHtml(tagName) + ' <i class="fas fa-times remove-tag"></i>';
+                chip.onclick = function() { toggleTagSelection(tagName); };
+                container.appendChild(chip);
+            });
+        }
+
+        function addNewTag() {
+            var input = document.getElementById('newTagInput');
+            var name = input.value.trim();
+            if (!name) return;
+            // Validate tag name
+            if (name.length > 30) { showToast('Tag name too long (max 30 chars)', 'error'); return; }
+            if (/[<>\x00]/.test(name)) { showToast('Tag contains invalid characters', 'error'); return; }
+
+            if (selectedTags.indexOf(name) === -1) {
+                selectedTags.push(name);
+                document.getElementById('videoTags').value = selectedTags.join(',');
+                // Also add to available if not exists
+                var exists = availableTags.some(function(t) { return (t.name || t) === name; });
+                if (!exists) {
+                    availableTags.push({ name: name });
+                }
+                renderTagsList();
+            }
+            input.value = '';
+        }
+
+        function setupTagInput() {
+            var input = document.getElementById('newTagInput');
+            if (input) {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') { e.preventDefault(); addNewTag(); }
+                });
+            }
+        }
+
+        // ===== AUTH =====
+        function checkAuth() {
+            var token = sessionStorage.getItem('creatorToken');
+            if (!token) token = localStorage.getItem('creatorToken'); // Backward compat
+            if (token) verifyToken(token);
+        }
+
+        async function verifyToken(token) {
+            try {
+                var res = await safeFetch(CONFIG.apiEndpoint + '/creator/profile', {
+                    headers: { 'X-Creator-Token': token }
+                });
+                if (res.ok) {
+                    var user = await res.json();
+                    currentUser = user;
+                    showApp();
+                } else {
+                    sessionStorage.removeItem('creatorToken');
+                    localStorage.removeItem('creatorToken');
+                }
+            } catch (e) {}
+        }
+
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(function(t) { t.classList.remove('active'); });
+            event.target.classList.add('active');
+            document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('signupForm').classList.toggle('hidden', tab !== 'signup');
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var email = document.getElementById('loginEmail').value;
+            var password = document.getElementById('loginPassword').value;
+            try {
+                var res = await safeFetch(CONFIG.apiEndpoint + '/creator/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, password: password })
+                });
+                var data = await res.json();
+                if (res.ok) {
+                    sessionStorage.setItem('creatorToken', data.token);
+                    localStorage.setItem('creatorToken', data.token);
+                    currentUser = data;
+                    showApp();
+                    showToast('Welcome back!', 'success');
+                } else {
+                    showToast(data.error || 'Login failed', 'error');
+                }
+            } catch (e) {
+                showToast('Network error', 'error');
+            }
+        });
+
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var username = document.getElementById('signupUsername').value;
+            var email = document.getElementById('signupEmail').value;
+            var password = document.getElementById('signupPassword').value;
+            try {
+                var res = await safeFetch(CONFIG.apiEndpoint + '/creator/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, email: email, password: password })
+                });
+                var data = await res.json();
+                if (res.ok) {
+                    showToast('Account created! Waiting for admin approval.', 'success');
+                    switchAuthTab('login');
+                } else {
+                    showToast(data.error || 'Signup failed', 'error');
+                }
+            } catch (e) {
+                showToast('Network error', 'error');
+            }
+        });
+
+        function logout() {
+            sessionStorage.removeItem('creatorToken');
+            localStorage.removeItem('creatorToken');
+            currentUser = null;
+            location.reload();
+        }
+
+        function showApp() {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.add('active');
+            document.getElementById('userAvatar').textContent = currentUser.username.charAt(0).toUpperCase();
+            loadDashboard();
+        }
+
+        // ===== NAVIGATION =====
+        function switchSection(section) {
+            document.querySelectorAll('.nav-item, .sidebar-item').forEach(function(el) {
+                el.classList.remove('active');
+                var onclick = el.getAttribute('onclick');
+                if (onclick && onclick.indexOf(section) !== -1) el.classList.add('active');
+            });
+            document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+            document.getElementById(section + 'Section').classList.add('active');
+            if (section === 'dashboard') loadDashboard();
+            if (section === 'myVideos') loadMyVideos();
+            if (section === 'myShorts') loadMyShorts();
+        }
+
+        // ===== DASHBOARD =====
+        async function loadDashboard() {
+            if (!currentUser) return;
+            try {
+                var token = sessionStorage.getItem('creatorToken') || localStorage.getItem('creatorToken');
+                var res = await safeFetch(CONFIG.apiEndpoint + '/creator/content', {
+                    headers: { 'X-Creator-Token': token }
+                });
+                var data = await res.json();
+                var videos = data.videos || [];
+                var shorts = data.shorts || [];
+
+                var totalViews = 0, totalLikes = 0;
+                videos.forEach(function(v) { totalViews += (v.realViews || 0); });
+                shorts.forEach(function(s) { totalViews += (s.realViews || 0); totalLikes += (s.likes || 0); });
+
+                document.getElementById('statVideos').textContent = videos.length;
+                document.getElementById('statShorts').textContent = shorts.length;
+                document.getElementById('statViews').textContent = formatNumber(totalViews);
+                document.getElementById('statLikes').textContent = formatNumber(totalLikes);
+
+                renderCharts(videos, shorts);
+            } catch (e) {}
+        }
+
+        function renderCharts(videos, shorts) {
+            var ctx1 = document.getElementById('viewsChart').getContext('2d');
+            if (viewsChart) viewsChart.destroy();
+            var allContent = videos.concat(shorts).sort(function(a,b) { return new Date(a.addedAt) - new Date(b.addedAt); });
+            var dates = allContent.map(function(c) { return new Date(c.addedAt).toLocaleDateString(); });
+            var views = allContent.map(function(c) { return c.realViews || 0; });
+
+            viewsChart = new Chart(ctx1, {
+                type: 'line', data: { labels: dates, datasets: [{ label: 'Real Views', data: views, borderColor: '#ff0050', backgroundColor: 'rgba(255,0,80,0.08)', tension: 0.4, fill: true, borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#ff0050' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#888' } }, x: { grid: { display: false }, ticks: { color: '#888', maxTicksLimit: 8 } } } }
+            });
+
+            var ctx2 = document.getElementById('performanceChart').getContext('2d');
+            if (performanceChart) performanceChart.destroy();
+            var vViews = videos.reduce(function(s,v) { return s + (v.realViews || 0); }, 0);
+            var sViews = shorts.reduce(function(s,sh) { return s + (sh.realViews || 0); }, 0);
+
+            performanceChart = new Chart(ctx2, {
+                type: 'doughnut', data: { labels: ['Videos', 'Shorts'], datasets: [{ data: [vViews, sViews], backgroundColor: ['#ff0050', '#00f2ea'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#888', padding: 20 } } }, cutout: '65%' }
+            });
+        }
+
+        // ===== UPLOAD =====
+        function selectType(type) {
+            document.getElementById('contentType').value = type;
+            document.querySelectorAll('.type-option').forEach(function(o) { o.classList.remove('active'); });
+            document.getElementById(type === 'video' ? 'typeVideo' : type === 'short' ? 'typeShort' : 'typeIframe').classList.add('active');
+            var isIframe = type === 'iframe';
+            document.getElementById('videoUploadSection').classList.toggle('hidden', isIframe);
+            document.getElementById('iframeUploadSection').classList.toggle('hidden', !isIframe);
+            document.getElementById('descriptionGroup').style.display = type === 'short' ? 'none' : 'block';
+        }
+
+        function setupDragDrop() {
+            ['videoUploadArea', 'thumbUploadArea'].forEach(function(areaId) {
+                var area = document.getElementById(areaId);
+                if (!area) return;
+                area.addEventListener('dragover', function(e) { e.preventDefault(); area.classList.add('dragover'); });
+                area.addEventListener('dragleave', function() { area.classList.remove('dragover'); });
+                area.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    area.classList.remove('dragover');
+                    var input = area.querySelector('input[type="file"]');
+                    if (e.dataTransfer.files.length) {
+                        input.files = e.dataTransfer.files;
+                        handleFileSelected(areaId === 'videoUploadArea' ? 'video' : 'thumb');
+                    }
+                });
+            });
+        }
+
+        function setupFileInputs() {
+            var vf = document.getElementById('videoFile');
+            var tf = document.getElementById('thumbFile');
+            if (vf) vf.addEventListener('change', function() { handleFileSelected('video'); });
+            if (tf) tf.addEventListener('change', function() { handleFileSelected('thumb'); });
+        }
+
+        function setupIframePreview() {
+            var iframeUrl = document.getElementById('iframeUrl');
+            if (iframeUrl) {
+                iframeUrl.addEventListener('input', function() {
+                    var preview = document.getElementById('iframePreview');
+                    var frame = document.getElementById('iframePreviewFrame');
+                    if (iframeUrl.value) {
+                        frame.src = iframeUrl.value;
+                        preview.classList.add('active');
+                    } else {
+                        preview.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        function handleFileSelected(type) {
+            var input = document.getElementById(type === 'video' ? 'videoFile' : 'thumbFile');
+            var file = input.files[0];
+            if (!file) return;
+
+            if (type === 'video') {
+                var area = document.getElementById('videoUploadArea');
+                area.classList.add('has-file');
+                document.getElementById('videoIcon').className = 'fas fa-file-video';
+                document.getElementById('videoIcon').style.color = 'var(--success)';
+                document.getElementById('videoFileName').textContent = file.name;
+                document.getElementById('videoFileName').className = 'file-name';
+                document.getElementById('videoFileSize').textContent = formatFileSize(file.size);
+                // Extract duration immediately
+                var durVideo = document.createElement('video');
+                durVideo.preload = 'metadata';
+                durVideo.onloadedmetadata = function() {
+                    var d = durVideo.duration;
+                    var mins = Math.floor(d / 60);
+                    var secs = Math.floor(d % 60);
+                    window.uploadVideoDuration = mins + ':' + (secs < 10 ? '0' : '') + secs;
+                };
+                durVideo.src = URL.createObjectURL(file);
+                generateVideoThumbnails(file);
+            } else {
+                var area = document.getElementById('thumbUploadArea');
+                area.classList.add('has-file');
+                document.getElementById('thumbIcon').className = 'fas fa-image';
+                document.getElementById('thumbIcon').style.color = 'var(--success)';
+                document.getElementById('thumbFileName').textContent = file.name;
+                document.getElementById('thumbFileName').className = 'file-name';
+                document.getElementById('thumbFileSize').textContent = formatFileSize(file.size);
+                selectedThumbnailIndex = -1;
+                document.querySelectorAll('.thumb-option').forEach(function(el) { el.classList.remove('selected'); });
+            }
+        }
+
+        async function generateVideoThumbnails(videoFile) {
+            var gallery = document.getElementById('thumbGallery');
+            gallery.innerHTML = '';
+            currentThumbnails = [];
+            selectedThumbnailIndex = -1;
+
+            var video = document.createElement('video');
+            video.preload = 'metadata';
+            video.muted = true;
+            video.playsInline = true;
+
+            var seekTimes = [0.1, 0.3, 0.5, 0.7, 0.9];
+
+            video.onloadedmetadata = function() {
+                var duration = video.duration;
+                // Store duration in global for upload
+                var mins = Math.floor(duration / 60);
+                var secs = Math.floor(duration % 60);
+                window.uploadVideoDuration = mins + ':' + (secs < 10 ? '0' : '') + secs;
+                var index = 0;
+
+                function captureNext() {
+                    if (index >= seekTimes.length) return;
+                    video.currentTime = Math.max(0.5, duration * seekTimes[index]);
+                }
+
+                video.onseeked = function() {
+                    var canvas = document.createElement('canvas');
+                    canvas.width = 320;
+                    canvas.height = 180;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    currentThumbnails.push(dataUrl);
+
+                    var option = document.createElement('div');
+                    option.className = 'thumb-option' + (index === 2 ? ' selected' : '');
+                    option.dataset.index = index;
+
+                    var img = document.createElement('img');
+                    img.src = dataUrl;
+                    img.alt = 'Thumbnail ' + (index + 1);
+
+                    var check = document.createElement('div');
+                    check.className = 'thumb-check';
+                    check.innerHTML = '<i class="fas fa-check"></i>';
+
+                    var label = document.createElement('div');
+                    label.className = 'thumb-label';
+                    label.textContent = Math.round(seekTimes[index] * 100) + '%';
+
+                    option.appendChild(img);
+                    option.appendChild(check);
+                    option.appendChild(label);
+                    option.onclick = function() {
+                        document.querySelectorAll('.thumb-option').forEach(function(o) { o.classList.remove('selected'); });
+                        option.classList.add('selected');
+                        selectedThumbnailIndex = parseInt(option.dataset.index);
+                    };
+
+                    gallery.appendChild(option);
+
+                    if (index === 2) selectedThumbnailIndex = 2;
+                    index++;
+                    captureNext();
+                };
+
+                captureNext();
+            };
+
+            video.src = URL.createObjectURL(videoFile);
+        }
+
+        async function startUpload() {
+            var title = document.getElementById('videoTitle').value.trim();
+            var category = document.getElementById('videoCategory').value;
+            var tags = selectedTags;
+            var description = document.getElementById('videoDescription').value.trim();
+            var contentType = document.getElementById('contentType').value;
+
+            if (!title) { showToast('Title is required', 'error'); return; }
+            if (title.length > 200) { showToast('Title too long (max 200 chars)', 'error'); return; }
+            if (/[<>\x00]/.test(title)) { showToast('Title contains invalid characters', 'error'); return; }
+
+            var token = sessionStorage.getItem('creatorToken') || localStorage.getItem('creatorToken');
+            if (!token) { showToast('Please login first', 'error'); return; }
+
+            var uploadBtn = document.getElementById('uploadBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+            try {
+                var body = {
+                    title: title,
+                    category: category,
+                    tags: tags,
+                    description: description,
+                    type: contentType
+                };
+
+                if (contentType === 'iframe') {
+                    var iframeUrl = document.getElementById('iframeUrl').value.trim();
+                    var iframeThumb = document.getElementById('iframeThumbnail').value.trim();
+                    if (!iframeUrl) { showToast('Iframe URL is required', 'error'); uploadBtn.disabled = false; uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Publish Content'; return; }
+                    body.videoUrl = iframeUrl;
+                    body.thumbnail = iframeThumb;
+
+                    var res = await safeFetch(CONFIG.apiEndpoint + '/creator/upload/video', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Creator-Token': token },
+                        body: JSON.stringify(body)
+                    });
+                    var data = await res.json();
+                    if (res.ok) {
+                        showToast('Content published!', 'success');
+                        resetUploadForm();
+                    } else {
+                        showToast(data.error || 'Upload failed', 'error');
+                    }
+                } else {
+                    // File upload
+                    var videoFile = document.getElementById('videoFile').files[0];
+                    if (!videoFile) { showToast('Video file is required', 'error'); uploadBtn.disabled = false; uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Publish Content'; return; }
+
+                    // Upload video file
+                    document.getElementById('videoProgress').classList.add('active');
+                    var formData = new FormData();
+                    formData.append('file', videoFile);
+                    formData.append('path', 'videos');
+                    formData.append('filename', Date.now() + '_' + videoFile.name.replace(/[^a-zA-Z0-9._-]/g, ''));
+
+                    var uploadRes = await safeFetch(CONFIG.apiEndpoint + '/upload/file', {
+                        method: 'POST',
+                        headers: { 'X-Creator-Token': token },
+                        body: formData
+                    });
+                    var uploadData = await uploadRes.json();
+                    document.getElementById('videoProgress').classList.remove('active');
+
+                    if (!uploadData.success) { showToast('Video upload failed', 'error'); uploadBtn.disabled = false; uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Publish Content'; return; }
+
+                    body.videoUrl = uploadData.url;
+                    body.duration = window.uploadVideoDuration || '0:00';
+
+                    // Handle thumbnail
+                    var thumbFile = document.getElementById('thumbFile').files[0];
+                    if (thumbFile) {
+                        document.getElementById('thumbProgress').classList.add('active');
+                        var thumbForm = new FormData();
+                        thumbForm.append('file', thumbFile);
+                        thumbForm.append('path', 'thumbnails');
+                        thumbForm.append('filename', 'thumb_' + Date.now() + '.jpg');
+
+                        var thumbRes = await safeFetch(CONFIG.apiEndpoint + '/upload/file', {
+                            method: 'POST',
+                            headers: { 'X-Creator-Token': token },
+                            body: thumbForm
+                        });
+                        var thumbData = await thumbRes.json();
+                        document.getElementById('thumbProgress').classList.remove('active');
+                        if (thumbData.success) body.thumbnail = thumbData.url;
+                    } else if (selectedThumbnailIndex >= 0 && currentThumbnails[selectedThumbnailIndex]) {
+                        // Upload generated thumbnail
+                        var thumbBlob = await fetch(currentThumbnails[selectedThumbnailIndex]).then(function(r) { return r.blob(); });
+                        var genForm = new FormData();
+                        genForm.append('file', thumbBlob, 'thumb_' + Date.now() + '.jpg');
+                        genForm.append('path', 'thumbnails');
+
+                        var genRes = await safeFetch(CONFIG.apiEndpoint + '/upload/file', {
+                            method: 'POST',
+                            headers: { 'X-Creator-Token': token },
+                            body: genForm
+                        });
+                        var genData = await genRes.json();
+                        if (genData.success) body.thumbnail = genData.url;
+                    }
+
+                    var endpoint = contentType === 'short' ? '/creator/upload/short' : '/creator/upload/video';
+                    var res = await safeFetch(CONFIG.apiEndpoint + endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Creator-Token': token },
+                        body: JSON.stringify(body)
+                    });
+                    var data = await res.json();
+                    if (res.ok) {
+                        showToast('Content published!', 'success');
+                        resetUploadForm();
+                    } else {
+                        showToast(data.error || 'Upload failed', 'error');
+                    }
+                }
+            } catch (e) {
+                showToast('Upload error: ' + e.message, 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Publish Content';
+            }
+        }
+
+        function resetUploadForm() {
+            document.getElementById('videoTitle').value = '';
+            document.getElementById('videoDescription').value = '';
+            document.getElementById('iframeUrl').value = '';
+            document.getElementById('iframeThumbnail').value = '';
+            document.getElementById('videoFile').value = '';
+            document.getElementById('thumbFile').value = '';
+            document.getElementById('newTagInput').value = '';
+            window.uploadVideoDuration = null;
+            selectedTags = [];
+            document.getElementById('videoTags').value = '';
+            renderTagsList();
+            selectType('video');
+        }
+
+        // ===== MY CONTENT =====
+        async function loadMyVideos() {
+            var token = sessionStorage.getItem('creatorToken') || localStorage.getItem('creatorToken');
+            if (!token) return;
+            try {
+                var res = await safeFetch(CONFIG.apiEndpoint + '/creator/content?type=videos', {
+                    headers: { 'X-Creator-Token': token }
+                });
+                var data = await res.json();
+                var container = document.getElementById('videosGrid');
+                container.innerHTML = '';
+                var videos = data.videos || [];
+                if (videos.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-video"></i><h3>No videos yet</h3><p>Upload your first video!</p></div>';
+                    return;
+                }
+                videos.forEach(function(video) {
+                    container.appendChild(createContentCard(video, 'video'));
+                });
+            } catch (e) {
+                document.getElementById('videosGrid').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Failed to load</h3></div>';
+            }
+        }
+
+        async function loadMyShorts() {
+            var token = sessionStorage.getItem('creatorToken') || localStorage.getItem('creatorToken');
+            if (!token) return;
+            try {
+                var res = await safeFetch(CONFIG.apiEndpoint + '/creator/content?type=shorts', {
+                    headers: { 'X-Creator-Token': token }
+                });
+                var data = await res.json();
+                var container = document.getElementById('shortsGrid');
+                container.innerHTML = '';
+                var shorts = data.shorts || [];
+                if (shorts.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-mobile-alt"></i><h3>No shorts yet</h3><p>Upload your first short!</p></div>';
+                    return;
+                }
+                shorts.forEach(function(short) {
+                    container.appendChild(createContentCard(short, 'short'));
+                });
+            } catch (e) {
+                document.getElementById('shortsGrid').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Failed to load</h3></div>';
+            }
+        }
+
+        function createContentCard(item, type) {
+            var card = document.createElement('div');
+            card.className = 'content-card';
+            card.dataset.id = item.numericId || item.id;
+
+            var select = document.createElement('div');
+            select.className = 'card-select';
+            select.innerHTML = '<i class="fas fa-check"></i>';
+
+            var thumb = document.createElement('img');
+            thumb.className = 'card-thumbnail';
+            thumb.src = item.thumbnail || '';
+            thumb.alt = escapeHtml(item.title);
+            thumb.onerror = function() { this.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyODAiIGhlaWdodD0iMTYwIj48cmVjdCBmaWxsPSIjMzMzIiB3aWR0aD0iMjgwIiBoZWlnaHQ9IjE2MCIvPjx0ZXh0IGZpbGw9IiM4ODgiIHg9IjUwJSIgeT0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gVGh1bWJuYWlsPC90ZXh0Pjwvc3ZnPg=='; };
+
+            var body = document.createElement('div');
+            body.className = 'card-body';
+            body.innerHTML = '<div class="card-title">' + escapeHtml(item.title) + '</div>' +
+                '<div class="card-meta">' +
+                '<span><i class="fas fa-eye"></i> ' + formatNumber(item.realViews || 0) + '</span>' +
+                '<span><i class="fas fa-clock"></i> ' + (item.duration || '0:00') + '</span>' +
+                '</div>';
+
+            var actions = document.createElement('div');
+            actions.className = 'card-actions';
+
+            var viewLink = document.createElement('a');
+            viewLink.className = 'card-btn';
+            viewLink.href = (type === 'short' ? 'shorts.html?id=' : 'video.html?id=') + encodeURIComponent(item.numericId || item.id);
+            viewLink.target = '_blank';
+            viewLink.innerHTML = '<i class="fas fa-eye"></i> View';
+
+            var delBtn = document.createElement('button');
+            delBtn.className = 'card-btn delete';
+            delBtn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+            delBtn.onclick = function() { confirmDelete(item.numericId || item.id, type); };
+
+            actions.appendChild(viewLink);
+            actions.appendChild(delBtn);
+
+            card.appendChild(select);
+            card.appendChild(thumb);
+            card.appendChild(body);
+            card.appendChild(actions);
+            return card;
+        }
+
+        // ===== BATCH MODE =====
+        function toggleBatchMode(type) {
+            batchMode[type] = !batchMode[type];
+            selectedItems[type].clear();
+            var container = document.getElementById(type + 'Grid');
+            container.querySelectorAll('.content-card').forEach(function(card) {
+                card.classList.toggle('selectable', batchMode[type]);
+                card.classList.remove('selected');
+            });
+            document.getElementById(type + 'BatchBar').classList.toggle('active', batchMode[type]);
+            updateBatchCount(type);
+        }
+
+        function cancelBatchMode(type) {
+            batchMode[type] = false;
+            selectedItems[type].clear();
+            document.querySelectorAll('#' + type + 'Grid .content-card').forEach(function(card) {
+                card.classList.remove('selectable', 'selected');
+            });
+            document.getElementById(type + 'BatchBar').classList.remove('active');
+        }
+
+        function updateBatchCount(type) {
+            var el = document.getElementById(type + 'SelectedCount');
+            if (el) el.textContent = selectedItems[type].size + ' selected';
+        }
+
+        // ===== DELETE =====
+        function confirmDelete(id, type) {
+            deleteCallback = function() {
+                deleteContent(id, type);
+            };
+            document.getElementById('deleteModalText').textContent = 'This will permanently delete this ' + type + '.';
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            document.getElementById('deleteModal').classList.remove('active');
+            if (deleteCallback) deleteCallback();
+            deleteCallback = null;
+        });
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            deleteCallback = null;
+        }
+
+        async function deleteContent(id, type) {
+            var token = sessionStorage.getItem('creatorToken') || localStorage.getItem('creatorToken');
+            if (!token) return;
+            try {
+                var endpoint = type === 'short' ? '/creator/short/delete' : '/creator/video/delete';
+                var res = await safeFetch(CONFIG.apiEndpoint + endpoint, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json', 'X-Creator-Token': token },
+                    body: JSON.stringify({ id: id })
+                });
+                if (res.ok) {
+                    showToast('Deleted successfully', 'success');
+                    if (type === 'video') loadMyVideos();
+                    else loadMyShorts();
+                } else {
+                    showToast('Delete failed', 'error');
+                }
+            } catch (e) {
+                showToast('Delete error', 'error');
+            }
+        }
+
+        // ===== UTILITIES =====
+        function escapeHtml(str) {
+            if (!str) return '';
+            var div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function formatNumber(num) {
+            if (!num || isNaN(num)) return '0';
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes) return '0 B';
+            var sizes = ['B', 'KB', 'MB', 'GB'];
+            var i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i];
+        }
+
+        function showToast(message, type) {
+            var container = document.getElementById('toastContainer');
+            var toast = document.createElement('div');
+            var colors = { success: 'border-left-color: var(--success);', error: 'border-left-color: var(--error);', warning: 'border-left-color: var(--warning);', info: 'border-left-color: var(--info);' };
+            toast.style.cssText = 'background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--primary); padding: 14px 20px; border-radius: var(--radius-sm); box-shadow: var(--shadow); animation: slideIn 0.3s ease; min-width: 300px; max-width: 400px; pointer-events: auto; font-size: 0.9rem; display: flex; align-items: center; gap: 10px;';
+            if (type === 'success') toast.style.borderLeftColor = 'var(--success)';
+            if (type === 'error') toast.style.borderLeftColor = 'var(--error)';
+            if (type === 'warning') toast.style.borderLeftColor = 'var(--warning)';
+            toast.innerHTML = '<i class="fas fa-' + (type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle') + '"></i> ' + escapeHtml(message);
+            container.appendChild(toast);
+            setTimeout(function() { toast.remove(); }, 3000);
+        }
+
+        document.getElementById('videosGrid').addEventListener('click', function(e) {
+            if (!batchMode.videos) return;
+            var card = e.target.closest('.content-card');
+            if (!card) return;
+            var id = card.dataset.id;
+            if (selectedItems.videos.has(id)) {
+                selectedItems.videos.delete(id);
+                card.classList.remove('selected');
+            } else {
+                selectedItems.videos.add(id);
+                card.classList.add('selected');
+            }
+            updateBatchCount('videos');
+        });
+
+        document.getElementById('shortsGrid').addEventListener('click', function(e) {
+            if (!batchMode.shorts) return;
+            var card = e.target.closest('.content-card');
+            if (!card) return;
+            var id = card.dataset.id;
+            if (selectedItems.shorts.has(id)) {
+                selectedItems.shorts.delete(id);
+                card.classList.remove('selected');
+            } else {
+                selectedItems.shorts.add(id);
+                card.classList.add('selected');
+            }
+            updateBatchCount('shorts');
+        });
+
+        async function batchDelete(type) {
+            var ids = Array.from(selectedItems[type]);
+            if (ids.length === 0) { showToast('Select items to delete', 'warning'); return; }
+            var label = type === 'videos' ? 'video' : 'short';
+            var token = sessionStorage.getItem('creatorToken') || localStorage.getItem('creatorToken');
+            if (!token) return;
+
+            var success = 0, failed = 0;
+            for (var i = 0; i < ids.length; i++) {
+                try {
+                    var endpoint = type === 'shorts' ? '/creator/short/delete' : '/creator/video/delete';
+                    var res = await safeFetch(CONFIG.apiEndpoint + endpoint, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json', 'X-Creator-Token': token },
+                        body: JSON.stringify({ id: ids[i] })
+                    });
+                    if (res.ok) success++; else failed++;
+                } catch (e) { failed++; }
+            }
+            showToast('Deleted ' + success + ' ' + label + '(s)' + (failed > 0 ? ', ' + failed + ' failed' : ''), success > 0 ? 'success' : 'error');
+            cancelBatchMode(type);
+            if (type === 'videos') loadMyVideos();
+            else loadMyShorts();
+        }
+    </script>
+</body>
+</html>
