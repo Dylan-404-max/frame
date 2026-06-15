@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#0a0a0a">
 
     <!-- Security: Content Security Policy -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.fluidplayer.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.fluidplayer.com; img-src * data: blob:; media-src * blob:; connect-src *; font-src https://cdnjs.cloudflare.com; frame-src *; object-src 'none'; base-uri 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.fluidplayer.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.fluidplayer.com; img-src * data: blob:; media-src * blob:; connect-src * data:; font-src https://cdnjs.cloudflare.com; frame-src *; object-src 'none'; base-uri 'self';">
     <!-- Security: Prevent iframe embedding (Clickjacking) -->
     <meta http-equiv="X-Frame-Options" content="DENY">
     <!-- Security: Referrer Policy -->
@@ -193,12 +193,12 @@
         .upload-area .file-name { color: var(--text-main); font-weight: 600; margin-bottom: 4px; }
         .upload-area .file-size { font-size: 0.8rem; color: var(--text-muted); }
 
-        .thumb-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+        .thumb-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; align-items: start; }
         @media (min-width: 640px) { .thumb-gallery { grid-template-columns: repeat(5, 1fr); } }
-        .thumb-option { position: relative; aspect-ratio: 16/9; border-radius: var(--radius-sm); overflow: hidden; cursor: pointer; border: 2px solid var(--border); transition: all 0.2s; }
+        .thumb-option { position: relative; border-radius: var(--radius-sm); overflow: hidden; cursor: pointer; border: 2px solid var(--border); transition: all 0.2s; background: #000; }
         .thumb-option:hover { border-color: var(--border-light); }
         .thumb-option.selected { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(255,0,80,0.3); }
-        .thumb-option img { width: 100%; height: 100%; object-fit: cover; }
+        .thumb-option img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .thumb-check { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
         .thumb-option.selected .thumb-check { opacity: 1; }
         .thumb-check i { font-size: 0.7rem; color: white; }
@@ -296,6 +296,7 @@
 
         .hidden { display: none !important; }
     </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -604,9 +605,6 @@
     <footer>
         <p> Xplitleaks Creator Studio. All rights reserved.</p>
     </footer>
-
-    <!-- Site Config -->
-    <script src="site-config.js"></script>
 
     <script>
         // ===== Disable console on non-localhost =====
@@ -1063,6 +1061,16 @@
                 var mins = Math.floor(duration / 60);
                 var secs = Math.floor(duration % 60);
                 window.uploadVideoDuration = mins + ':' + (secs < 10 ? '0' : '') + secs;
+
+                // Detect video orientation
+                var videoWidth = video.videoWidth || 1920;
+                var videoHeight = video.videoHeight || 1080;
+                var isVertical = videoHeight > videoWidth;
+                var isSquare = Math.abs(videoWidth - videoHeight) < 100;
+
+                // Store orientation for upload
+                window.uploadVideoOrientation = isVertical ? 'vertical' : (isSquare ? 'square' : 'horizontal');
+
                 var index = 0;
 
                 function captureNext() {
@@ -1072,20 +1080,52 @@
 
                 video.onseeked = function() {
                     var canvas = document.createElement('canvas');
-                    canvas.width = 320;
-                    canvas.height = 180;
                     var ctx = canvas.getContext('2d');
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+                    // Set canvas dimensions based on video orientation
+                    var maxSize = 320;
+                    if (isVertical) {
+                        // Vertical video (9:16) - portrait orientation
+                        canvas.width = maxSize;
+                        canvas.height = Math.round(maxSize * 16 / 9);
+                    } else if (isSquare) {
+                        // Square video (1:1)
+                        canvas.width = maxSize;
+                        canvas.height = maxSize;
+                    } else {
+                        // Horizontal video (16:9) - landscape orientation
+                        canvas.width = maxSize;
+                        canvas.height = Math.round(maxSize * 9 / 16);
+                    }
+
+                    // Draw video maintaining aspect ratio (cover mode)
+                    var scale = Math.max(canvas.width / videoWidth, canvas.height / videoHeight);
+                    var x = (canvas.width / 2) - (videoWidth / 2) * scale;
+                    var y = (canvas.height / 2) - (videoHeight / 2) * scale;
+                    ctx.drawImage(video, x, y, videoWidth * scale, videoHeight * scale);
+
+                    var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
                     currentThumbnails.push(dataUrl);
 
                     var option = document.createElement('div');
                     option.className = 'thumb-option' + (index === 2 ? ' selected' : '');
                     option.dataset.index = index;
 
+                    // Set aspect ratio for the thumbnail option based on orientation
+                    if (isVertical) {
+                        option.style.aspectRatio = '9/16';
+                    } else if (isSquare) {
+                        option.style.aspectRatio = '1/1';
+                    } else {
+                        option.style.aspectRatio = '16/9';
+                    }
+
                     var img = document.createElement('img');
                     img.src = dataUrl;
                     img.alt = 'Thumbnail ' + (index + 1);
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
 
                     var check = document.createElement('div');
                     check.className = 'thumb-check';
@@ -1206,8 +1246,17 @@
                         document.getElementById('thumbProgress').classList.remove('active');
                         if (thumbData.success) body.thumbnail = thumbData.url;
                     } else if (selectedThumbnailIndex >= 0 && currentThumbnails[selectedThumbnailIndex]) {
-                        // Upload generated thumbnail
-                        var thumbBlob = await fetch(currentThumbnails[selectedThumbnailIndex]).then(function(r) { return r.blob(); });
+                        // Upload generated thumbnail - convert data URL to blob
+                        var dataUrl = currentThumbnails[selectedThumbnailIndex];
+                        var byteString = atob(dataUrl.split(',')[1]);
+                        var mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+                        var ab = new ArrayBuffer(byteString.length);
+                        var ia = new Uint8Array(ab);
+                        for (var i = 0; i < byteString.length; i++) {
+                            ia[i] = byteString.charCodeAt(i);
+                        }
+                        var thumbBlob = new Blob([ab], { type: mimeString });
+
                         var genForm = new FormData();
                         genForm.append('file', thumbBlob, 'thumb_' + Date.now() + '.jpg');
                         genForm.append('path', 'thumbnails');
