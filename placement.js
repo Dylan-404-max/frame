@@ -143,7 +143,8 @@
             }
         }
 
-        // No meta tags or global config found — script goes completely inactive
+        // No meta tags or global config found — placementUrls is empty,
+        // click handler will exit early without interfering
         placementUrls = [];
     }
 
@@ -418,6 +419,10 @@
             // Safety guards
             if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
             if (window.getSelection().toString().length > 0) return;
+
+            // CRITICAL: If no placement URLs configured, do not intercept ANY clicks
+            // The script should be completely transparent when inactive
+            if (placementUrls.length === 0) return;
 
             // Mobile: check touch delta
             if (window._placementTouchStartY !== undefined) {
