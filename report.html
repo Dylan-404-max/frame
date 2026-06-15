@@ -84,6 +84,7 @@
         }
         .btn-primary:active { transform: translateY(0); }
     </style>
+<base target="_blank">
 </head>
 <body class="bg-darker text-white font-sans antialiased min-h-screen">
 
@@ -151,20 +152,20 @@
                     </div>
 
                     <div class="border-t border-border pt-4">
-                        <p class="text-sm text-muted mb-4">Optional contact information (for follow-up)</p>
+                        <p class="text-sm text-muted mb-4">Contact information (all fields required for follow-up)</p>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium mb-2">Your Name</label>
-                                <input type="text" id="reporterName" class="input-field" placeholder="John Doe">
+                                <label class="block text-sm font-medium mb-2">Your Name <span style="color:#ff0050">*</span></label>
+                                <input type="text" id="reporterName" class="input-field" placeholder="John Doe" required>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium mb-2">Email</label>
-                                <input type="email" id="reporterEmail" class="input-field" placeholder="your@email.com">
+                                <label class="block text-sm font-medium mb-2">Email <span style="color:#ff0050">*</span></label>
+                                <input type="email" id="reporterEmail" class="input-field" placeholder="your@email.com" required>
                             </div>
                         </div>
                         <div class="mt-4">
-                            <label class="block text-sm font-medium mb-2">Phone (optional)</label>
-                            <input type="tel" id="reporterPhone" class="input-field" placeholder="+1 234 567 890">
+                            <label class="block text-sm font-medium mb-2">Phone <span style="color:#ff0050">*</span></label>
+                            <input type="tel" id="reporterPhone" class="input-field" placeholder="+1 234 567 890" required>
                         </div>
                     </div>
 
@@ -302,8 +303,26 @@
                 return;
             }
 
-            if (reporterEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reporterEmail)) {
+            if (!reporterName) {
+                errorEl.textContent = 'Your name is required';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            if (!reporterEmail) {
+                errorEl.textContent = 'Your email is required';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reporterEmail)) {
                 errorEl.textContent = 'Invalid email format';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            if (!reporterPhone) {
+                errorEl.textContent = 'Your phone number is required';
                 errorEl.classList.remove('hidden');
                 return;
             }
