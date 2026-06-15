@@ -1181,7 +1181,7 @@
                     category: category,
                     tags: tags,
                     description: description,
-                    type: contentType
+                    type: contentType === 'video' ? 'r2' : contentType
                 };
 
                 if (contentType === 'iframe') {
