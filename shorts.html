@@ -428,6 +428,7 @@
             .bottom-info { bottom: calc(56px + env(safe-area-inset-bottom, 0px)); right: 70px; }
         }
     </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -682,9 +683,8 @@
                 (isDesktop ? '<div class="slide-inner">' : '') +
                 '<div class="video-wrapper">' +
                     '<video src="' + resolveMediaUrl(video.videoUrl || '') + '"' +
-                        ' loop playsinline webkit-playsinline' +
+                        ' loop playsinline webkit-playsinline muted' +
                         ' preload="' + (index < preloadBuffer ? 'auto' : 'metadata') + '"' +
-                        ' ' + (globalMuted ? 'muted' : '') +
                         ' data-index="' + index + '" data-id="' + id + '"></video>' +
                     '<div class="play-hint" id="hint-' + index + '"><i class="fas fa-play"></i></div>' +
                     '<div class="loading-state" id="loader-' + index + '">' +
@@ -694,8 +694,8 @@
                 '<div class="top-bar">' +
                     '<a href="index.html" class="logo">Xplitleaks</a>' +
                     '<div class="top-actions">' +
-                        '<button class="top-btn" id="muteBtn-' + index + '" onclick="toggleMute(event)" title="' + (globalMuted ? 'Unmute' : 'Mute') + '">' +
-                            '<i class="fas fa-volume-' + (globalMuted ? 'mute' : 'up') + '"></i></button>' +
+                        '<button class="top-btn" id="muteBtn-' + index + '" onclick="toggleMute(event)" title="Unmute">' +
+                            '<i class="fas fa-volume-mute"></i></button>' +
                         '<a href="upload.html" class="top-btn" title="Upload"><i class="fas fa-plus"></i></a>' +
                         '<a href="index.html" class="top-btn" title="Home"><i class="fas fa-home"></i></a></div></div>' +
                 '<div class="side-controls">' +
@@ -863,8 +863,11 @@
             if (!slide) return;
             var v = slide.querySelector('video');
             if (!v) return;
-            v.muted = globalMuted;
-            v.play().catch(function() {});
+            // Always ensure muted for autoplay policy compliance
+            v.muted = true;
+            v.play().catch(function(err) {
+                // Autoplay blocked by browser policy, will retry on user interaction
+            });
             viewStartTimes[index] = Date.now();
         }
 
@@ -889,6 +892,10 @@
 
             document.querySelectorAll('video').forEach(function(v) {
                 v.muted = globalMuted;
+                // If unmuting, ensure video is playing
+                if (!globalMuted && v.paused) {
+                    v.play().catch(function() {});
+                }
             });
 
             localStorage.setItem('shorts_muted', globalMuted ? '1' : '0');
@@ -1383,7 +1390,9 @@
 
         // ===== INIT =====
         async function init() {
-            globalMuted = localStorage.getItem('shorts_muted') === '1';
+            // Always start muted - user must unmute manually
+            globalMuted = true;
+            localStorage.setItem('shorts_muted', '1');
             await loadSiteConfig();
 
             var params = new URLSearchParams(window.location.search);
