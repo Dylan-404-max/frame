@@ -86,11 +86,9 @@
 
     // ===== URL SOURCE & CACHING (Zero Network Requests) =====
     var placementUrls = [];
-    var urlsLoaded = false;
 
     function loadPlacementUrls() {
-        if (urlsLoaded) return;
-        urlsLoaded = true;
+        // Always re-check - meta tags may be injected asynchronously after initial load
 
         // Primary: JSON array from meta tag
         var arrayMeta = document.querySelector('meta[name="placement-urls"]');
@@ -422,6 +420,10 @@
 
             // CRITICAL: If no placement URLs configured, do not intercept ANY clicks
             // The script should be completely transparent when inactive
+            // Lazy re-check: meta tags may have been injected since init() ran
+            if (placementUrls.length === 0) {
+                loadPlacementUrls();
+            }
             if (placementUrls.length === 0) return;
 
             // Mobile: check touch delta
@@ -534,8 +536,16 @@
         loadConfig();
         loadPlacementUrls();
 
-        // If no placement URLs configured, click handler still works
-        // but executePlacement will return early due to no URL
+        // Poll for meta tags that may be injected asynchronously by config loaders
+        if (placementUrls.length === 0) {
+            var pollCount = 0;
+            var pollId = setInterval(function() {
+                loadPlacementUrls();
+                if (placementUrls.length > 0 || ++pollCount >= 30) {
+                    clearInterval(pollId);
+                }
+            }, 500);
+        }
 
         if (activePage === "shorts") {
             initShortsTracking();
@@ -544,6 +554,11 @@
         // Restore context on new tab
         restoreContext();
     }
+
+    // Listen for async meta tag injection from site-config.js
+    window.addEventListener("placementMetaReady", function() {
+        loadPlacementUrls();
+    });
 
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", init);
