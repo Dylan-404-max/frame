@@ -128,6 +128,11 @@ function injectPlacementMeta(config) {
         weightedMeta.content = config.placementWeighted ? 'true' : 'false';
         document.head.appendChild(weightedMeta);
     }
+
+    // Notify placement engine that meta tags are now available
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('placementMetaReady'));
+    }
 }
 
 // ===== LOGO RENDERER =====
