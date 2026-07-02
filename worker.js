@@ -160,31 +160,49 @@ export default {
     // ============================================
     // OG TAG HTML GENERATOR
     // ============================================
-    async function generateOGPage(title, description, image, videoUrl, type, contentId) {
+    // ALL content types use thumbnail-only preview (og:type='website')
+    // No inline video player - users must click through to the site
+    async function generateOGPage(title, description, image, videoUrl, type, contentId, videoWidth, videoHeight) {
       const siteName = 'Xplitleaks';
-      const pageUrl = `${url.origin}/${type === 'short' ? 'shorts' : 'video'}.html?id=${contentId}`;
+      const isShort = type === 'short';
+      const pagePath = isShort ? 'shorts' : 'video';
+      const pageUrl = `${url.origin}/${pagePath}.html?id=${contentId}`;
       const thumb = normalizeUrl(image) || '';
+
+      // Content type label for the preview
+      const contentLabel = isShort ? 'Short' : 'Video';
+
+      // Use consistent large image dimensions for ALL content types
+      // Telegram/Facebook show the same size preview regardless of content type
+      const ogImageWidth = '1200';
+      const ogImageHeight = '630';
+
+      // Build OG tags - ALWAYS thumbnail-only preview for all content types
+      // Using og:type="website" prevents platforms from embedding inline video players
+      const ogTags = `
+  <meta property="og:title" content="${escapeHtml(title)} - ${siteName}">
+  <meta property="og:description" content="${escapeHtml(description)}">
+  <meta property="og:image" content="${thumb}">
+  <meta property="og:image:width" content="${ogImageWidth}">
+  <meta property="og:image:height" content="${ogImageHeight}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="${siteName}">
+  <meta property="og:url" content="${pageUrl}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escapeHtml(title)} - ${siteName}">
+  <meta name="twitter:description" content="${escapeHtml(description)}">
+  <meta name="twitter:image" content="${thumb}">
+  <meta name="twitter:site" content="@xplitleaks">
+  <meta name="description" content="${escapeHtml(description)}">
+  <meta name="xplitleaks:content_type" content="${isShort ? 'short' : 'video'}">
+  <meta name="xplitleaks:content_label" content="${contentLabel}">`;
 
       return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(title)} - ${siteName}</title>
-  <meta name="description" content="${escapeHtml(description)}">
-  <meta property="og:title" content="${escapeHtml(title)}">
-  <meta property="og:description" content="${escapeHtml(description)}">
-  <meta property="og:image" content="${thumb}">
-  <meta property="og:type" content="video.other">
-  <meta property="og:site_name" content="${siteName}">
-  <meta property="og:url" content="${pageUrl}">
-  ${videoUrl ? `<meta property="og:video" content="${normalizeUrl(videoUrl)}">` : ''}
-  ${videoUrl ? `<meta property="og:video:type" content="video/mp4">` : ''}
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="${escapeHtml(title)}">
-  <meta name="twitter:description" content="${escapeHtml(description)}">
-  <meta name="twitter:image" content="${thumb}">
-  <meta name="twitter:site" content="@xplitleaks">
+  <title>${escapeHtml(title)} - ${siteName}</title>${ogTags}
   <link rel="canonical" href="${pageUrl}">
   <style>body{background:#0a0a0a;color:#fff;font-family:sans-serif;text-align:center;padding:40px}a{color:#ff0050;text-decoration:none;font-size:18px}</style>
 </head>
@@ -268,12 +286,12 @@ export default {
         });
       }
 
-      // Generate OG page
+      // Generate OG page - ALWAYS thumbnail-only preview
       const ogHtml = await generateOGPage(
         content.title || (isShort ? 'Short Video' : 'Video'),
         content.description || `Watch ${content.title || 'this video'} on Xplitleaks`,
         content.thumbnail,
-        content.videoUrl,
+        null,  // No video URL needed for thumbnail-only previews
         isShort ? 'short' : 'video',
         content.numericId || content.id
       );
@@ -290,11 +308,128 @@ export default {
       // STATIC FILES + OG TAGS (Non-API routes)
       // ============================================
       if (!path.startsWith('/api/')) {
-        // Try to serve static file with OG injection
+        // ============================================
+        // GITHUB PAGES PROXY + OG INJECTION FOR CRAWLERS
+        // ============================================
+
+        const GITHUB_PAGES_URL = 'https://dylan-404-max.github.io/frame';
+
+        // For crawlers on video/short pages, fetch from GitHub Pages and inject OG tags
+        if (isCrawler(request) && (path.includes('video') || path.includes('shorts'))) {
+          const videoId = url.searchParams.get('id');
+
+          if (videoId) {
+            // Fetch the HTML from GitHub Pages
+            const ghUrl = GITHUB_PAGES_URL + path + url.search;
+            const ghResponse = await fetch(ghUrl, {
+              headers: { 'User-Agent': request.headers.get('User-Agent') || 'Mozilla/5.0' }
+            });
+
+            if (ghResponse.ok) {
+              let html = await ghResponse.text();
+
+              // Determine content type and fetch from D1
+              const isShort = path.includes('shorts');
+              const table = isShort ? 'shorts' : 'videos';
+
+              const content = await env.DB.prepare(`
+                SELECT title, description, thumbnail, videoUrl, numericId, id
+                FROM ${table}
+                WHERE (numericId = ? OR id = ?) AND status = 'active'
+              `).bind(videoId, videoId).first();
+
+              if (content) {
+                const siteName = 'Xplitleaks';
+                const title = escapeHtml(content.title || (isShort ? 'Short Video' : 'Video'));
+                const description = escapeHtml(content.description || `Watch ${content.title || 'this video'} on ${siteName}`);
+                const thumb = normalizeUrl(content.thumbnail) || '';
+                const videoUrl = normalizeUrl(content.videoUrl) || '';
+                const pageUrl = url.href;
+                const contentId = content.numericId || content.id;
+
+                // Detect if this is a short based on the path or content type
+                const contentType = isShort ? 'short' : 'video';
+
+                // ALL content uses thumbnail-only preview (og:type='website')
+                // No inline video player - users must click through to the site
+                const ogType = 'website';
+                const contentLabel = isShort ? 'Short' : 'Video';
+
+                // Consistent large image dimensions for all content types
+                const ogImageWidth = '1200';
+                const ogImageHeight = '630';
+
+                // Build OG tags - ALWAYS thumbnail-only for all content types
+                let ogTags = `
+  <meta property="og:title" content="${title} - ${siteName}">
+  <meta property="og:description" content="${description}">
+  <meta property="og:image" content="${thumb}">
+  <meta property="og:image:width" content="${ogImageWidth}">
+  <meta property="og:image:height" content="${ogImageHeight}">
+  <meta property="og:type" content="${ogType}">
+  <meta property="og:site_name" content="${siteName}">
+  <meta property="og:url" content="${pageUrl}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${title} - ${siteName}">
+  <meta name="twitter:description" content="${description}">
+  <meta name="twitter:image" content="${thumb}">
+  <meta name="description" content="${description}">
+  <meta name="xplitleaks:content_type" content="${contentType}">
+  <meta name="xplitleaks:content_label" content="${contentLabel}">
+  <title>${title} - ${siteName}</title>`;
+
+                // Remove existing dynamic OG meta tags and title to avoid duplicates
+                html = html.replace(/<meta[^>]*id="ogTitle"[^>]*>/gi, '');
+                html = html.replace(/<meta[^>]*id="ogDescription"[^>]*>/gi, '');
+                html = html.replace(/<meta[^>]*id="ogImage"[^>]*>/gi, '');
+                html = html.replace(/<meta[^>]*id="ogUrl"[^>]*>/gi, '');
+                html = html.replace(/<meta[^>]*id="twitterTitle"[^>]*>/gi, '');
+                html = html.replace(/<meta[^>]*id="twitterDescription"[^>]*>/gi, '');
+                html = html.replace(/<meta[^>]*id="twitterImage"[^>]*>/gi, '');
+                html = html.replace(/<meta[^>]*id="metaDescription"[^>]*>/gi, '');
+                html = html.replace(/<title[^>]*>.*?<\/title>/gi, '');
+
+                // Inject OG tags after <head>
+                html = html.replace('<head>', '<head>' + ogTags);
+
+                return new Response(html, {
+                  status: 200,
+                  headers: {
+                    'Content-Type': 'text/html; charset=utf-8',
+                    'Cache-Control': 'public, max-age=300',
+                    'X-OG-Injected': 'true'
+                  }
+                });
+              }
+            }
+          }
+        }
+
+        // For all other requests (non-crawlers or non-video pages), proxy to GitHub Pages
+        const proxyUrl = GITHUB_PAGES_URL + path + url.search;
+        const proxyResponse = await fetch(proxyUrl, {
+          headers: {
+            'User-Agent': request.headers.get('User-Agent') || 'Mozilla/5.0',
+            'Accept': request.headers.get('Accept') || '*/*'
+          }
+        });
+
+        if (proxyResponse.ok) {
+          // Clone the response to modify headers if needed
+          const newHeaders = new Headers(proxyResponse.headers);
+          newHeaders.set('X-Proxy-By', 'Xplitleaks-Worker');
+
+          return new Response(proxyResponse.body, {
+            status: proxyResponse.status,
+            statusText: proxyResponse.statusText,
+            headers: newHeaders
+          });
+        }
+
+        // Fallback to original R2 static serving if GitHub Pages fails
         const staticResponse = await serveStaticWithOG(path);
         if (staticResponse) return staticResponse;
 
-        // If no static file found, return 404
         return errorResponse('Not found', 404);
       }
 
