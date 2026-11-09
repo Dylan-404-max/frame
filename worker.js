@@ -1,6 +1,6 @@
 // ============================================
-// XPLITLEAKS API - CLOUDFLARE WORKER v5.1
-// Fixed: Schema alignment, logo/SVG/favicon support, config completeness
+// RAWFRAME API - CLOUDFLARE WORKER v5.2
+// Fixed: Branding -> Rawframe, OG preview sizing for shorts vs videos
 // ============================================
 
 // In-memory cache for catalog stats (refreshes every 5 minutes)
@@ -16,6 +16,8 @@ const CRAWLER_UAS = [
   'embark','xayn','pinterestbot','redditbot','vkshare',
   'skypeuripreview','snapchat','mastodon','line','kakaotalk'
 ];
+
+const SITE_NAME = 'Rawframe';
 
 function isCrawler(request) {
   const ua = (request.headers.get('User-Agent') || '').toLowerCase();
@@ -158,41 +160,47 @@ export default {
     }
 
     // ============================================
+    // OG DIMENSIONS HELPER
+    // Shorts are vertical -> declare portrait dims so Telegram renders a BIG preview
+    // Videos are horizontal -> declare landscape dims for full-width preview
+    // ============================================
+    function getOGDimensions(isShort) {
+      if (isShort) {
+        // Portrait / vertical (9:16) - matches typical short thumbnails
+        return { width: '1080', height: '1920', type: 'article', card: 'summary_large_image' };
+      }
+      // Landscape / horizontal (16:9)
+      return { width: '1280', height: '720', type: 'video.other', card: 'summary_large_image' };
+    }
+
+    // ============================================
     // OG TAG HTML GENERATOR
     // ============================================
-    // ALL content types use thumbnail-only preview (og:type='website')
-    // No inline video player - users must click through to the site
     async function generateOGPage(title, description, image, videoUrl, type, contentId, videoWidth, videoHeight) {
-      const siteName = 'Xplitleaks';
       const isShort = type === 'short';
       const pagePath = isShort ? 'shorts' : 'video';
       const pageUrl = `${url.origin}/${pagePath}.html?id=${contentId}`;
       const thumb = normalizeUrl(image) || '';
 
-      // Content type label for the preview
       const contentLabel = isShort ? 'Short' : 'Video';
+      const dims = getOGDimensions(isShort);
 
-      // Use consistent large image dimensions for ALL content types
-      // Telegram/Facebook show the same size preview regardless of content type
-      const ogImageWidth = '1200';
-      const ogImageHeight = '630';
-
-      // Build OG tags - ALWAYS thumbnail-only preview for all content types
-      // Using og:type="website" prevents platforms from embedding inline video players
       const ogTags = `
-  <meta property="og:title" content="${escapeHtml(title)} - ${siteName}">
+  <meta property="og:title" content="${escapeHtml(title)} - ${SITE_NAME}">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:image" content="${thumb}">
-  <meta property="og:image:width" content="${ogImageWidth}">
-  <meta property="og:image:height" content="${ogImageHeight}">
+  <meta property="og:image:secure_url" content="${thumb}">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="${dims.width}">
+  <meta property="og:image:height" content="${dims.height}">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="${siteName}">
+  <meta property="og:site_name" content="${SITE_NAME}">
   <meta property="og:url" content="${pageUrl}">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="${escapeHtml(title)} - ${siteName}">
+  <meta name="twitter:card" content="${dims.card}">
+  <meta name="twitter:title" content="${escapeHtml(title)} - ${SITE_NAME}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${thumb}">
-  <meta name="twitter:site" content="@xplitleaks">
+  <meta name="twitter:site" content="@rawframe">
   <meta name="description" content="${escapeHtml(description)}">
   <meta name="xplitleaks:content_type" content="${isShort ? 'short' : 'video'}">
   <meta name="xplitleaks:content_label" content="${contentLabel}">`;
@@ -202,7 +210,7 @@ export default {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(title)} - ${siteName}</title>${ogTags}
+  <title>${escapeHtml(title)} - ${SITE_NAME}</title>${ogTags}
   <link rel="canonical" href="${pageUrl}">
   <style>body{background:#0a0a0a;color:#fff;font-family:sans-serif;text-align:center;padding:40px}a{color:#ff0050;text-decoration:none;font-size:18px}</style>
 </head>
@@ -210,7 +218,7 @@ export default {
   <h1>${escapeHtml(title)}</h1>
   <p>${escapeHtml(description)}</p>
   ${thumb ? `<img src="${thumb}" style="max-width:480px;border-radius:12px;margin:20px auto;display:block;">` : ''}
-  <p><a href="${pageUrl}">Watch on ${siteName}</a></p>
+  <p><a href="${pageUrl}">Watch on ${SITE_NAME}</a></p>
 </body>
 </html>`;
     }
@@ -236,7 +244,6 @@ export default {
 
       const html = await obj.text();
 
-      // Only inject OG tags for crawlers on video/short pages
       if (!isCrawler(request)) {
         return new Response(html, {
           headers: {
@@ -246,7 +253,6 @@ export default {
         });
       }
 
-      // Check for video ID in query
       const videoId = url.searchParams.get('id');
       if (!videoId) {
         return new Response(html, {
@@ -257,7 +263,6 @@ export default {
         });
       }
 
-      // Determine content type from path
       const isShort = pathname.includes('shorts');
       const isVideo = pathname.includes('video');
 
@@ -270,7 +275,6 @@ export default {
         });
       }
 
-      // Fetch content data from D1
       const table = isShort ? 'shorts' : 'videos';
       const content = await env.DB.prepare(`
         SELECT * FROM ${table}
@@ -286,12 +290,11 @@ export default {
         });
       }
 
-      // Generate OG page - ALWAYS thumbnail-only preview
       const ogHtml = await generateOGPage(
         content.title || (isShort ? 'Short Video' : 'Video'),
-        content.description || `Watch ${content.title || 'this video'} on Xplitleaks`,
+        content.description || `Watch ${content.title || 'this video'} on ${SITE_NAME}`,
         content.thumbnail,
-        null,  // No video URL needed for thumbnail-only previews
+        null,
         isShort ? 'short' : 'video',
         content.numericId || content.id
       );
@@ -308,18 +311,14 @@ export default {
       // STATIC FILES + OG TAGS (Non-API routes)
       // ============================================
       if (!path.startsWith('/api/')) {
-        // ============================================
-        // GITHUB PAGES PROXY + OG INJECTION FOR CRAWLERS
-        // ============================================
 
-        const GITHUB_PAGES_URL = 'https://dylan-404-max.github.io/frame';
+        const GITHUB_PAGES_URL = 'https://rawframe.xyz';
 
         // For crawlers on video/short pages, fetch from GitHub Pages and inject OG tags
         if (isCrawler(request) && (path.includes('video') || path.includes('shorts'))) {
           const videoId = url.searchParams.get('id');
 
           if (videoId) {
-            // Fetch the HTML from GitHub Pages
             const ghUrl = GITHUB_PAGES_URL + path + url.search;
             const ghResponse = await fetch(ghUrl, {
               headers: { 'User-Agent': request.headers.get('User-Agent') || 'Mozilla/5.0' }
@@ -328,7 +327,6 @@ export default {
             if (ghResponse.ok) {
               let html = await ghResponse.text();
 
-              // Determine content type and fetch from D1
               const isShort = path.includes('shorts');
               const table = isShort ? 'shorts' : 'videos';
 
@@ -339,44 +337,37 @@ export default {
               `).bind(videoId, videoId).first();
 
               if (content) {
-                const siteName = 'Xplitleaks';
                 const title = escapeHtml(content.title || (isShort ? 'Short Video' : 'Video'));
-                const description = escapeHtml(content.description || `Watch ${content.title || 'this video'} on ${siteName}`);
+                const description = escapeHtml(content.description || `Watch ${content.title || 'this video'} on ${SITE_NAME}`);
                 const thumb = normalizeUrl(content.thumbnail) || '';
-                const videoUrl = normalizeUrl(content.videoUrl) || '';
                 const pageUrl = url.href;
                 const contentId = content.numericId || content.id;
 
-                // Detect if this is a short based on the path or content type
                 const contentType = isShort ? 'short' : 'video';
-
-                // ALL content uses thumbnail-only preview (og:type='website')
-                // No inline video player - users must click through to the site
-                const ogType = 'website';
                 const contentLabel = isShort ? 'Short' : 'Video';
 
-                // Consistent large image dimensions for all content types
-                const ogImageWidth = '1200';
-                const ogImageHeight = '630';
+                // Get dimensions based on content type (portrait for shorts, landscape for videos)
+                const dims = getOGDimensions(isShort);
 
-                // Build OG tags - ALWAYS thumbnail-only for all content types
                 let ogTags = `
-  <meta property="og:title" content="${title} - ${siteName}">
+  <meta property="og:title" content="${title} - ${SITE_NAME}">
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${thumb}">
-  <meta property="og:image:width" content="${ogImageWidth}">
-  <meta property="og:image:height" content="${ogImageHeight}">
-  <meta property="og:type" content="${ogType}">
-  <meta property="og:site_name" content="${siteName}">
+  <meta property="og:image:secure_url" content="${thumb}">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="${dims.width}">
+  <meta property="og:image:height" content="${dims.height}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="${SITE_NAME}">
   <meta property="og:url" content="${pageUrl}">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="${title} - ${siteName}">
+  <meta name="twitter:card" content="${dims.card}">
+  <meta name="twitter:title" content="${title} - ${SITE_NAME}">
   <meta name="twitter:description" content="${description}">
   <meta name="twitter:image" content="${thumb}">
   <meta name="description" content="${description}">
   <meta name="xplitleaks:content_type" content="${contentType}">
   <meta name="xplitleaks:content_label" content="${contentLabel}">
-  <title>${title} - ${siteName}</title>`;
+  <title>${title} - ${SITE_NAME}</title>`;
 
                 // Remove existing dynamic OG meta tags and title to avoid duplicates
                 html = html.replace(/<meta[^>]*id="ogTitle"[^>]*>/gi, '');
@@ -405,7 +396,7 @@ export default {
           }
         }
 
-        // For all other requests (non-crawlers or non-video pages), proxy to GitHub Pages
+        // For all other requests proxy to GitHub Pages
         const proxyUrl = GITHUB_PAGES_URL + path + url.search;
         const proxyResponse = await fetch(proxyUrl, {
           headers: {
@@ -415,9 +406,8 @@ export default {
         });
 
         if (proxyResponse.ok) {
-          // Clone the response to modify headers if needed
           const newHeaders = new Headers(proxyResponse.headers);
-          newHeaders.set('X-Proxy-By', 'Xplitleaks-Worker');
+          newHeaders.set('X-Proxy-By', 'Rawframe-Worker');
 
           return new Response(proxyResponse.body, {
             status: proxyResponse.status,
@@ -426,7 +416,6 @@ export default {
           });
         }
 
-        // Fallback to original R2 static serving if GitHub Pages fails
         const staticResponse = await serveStaticWithOG(path);
         if (staticResponse) return staticResponse;
 
@@ -441,7 +430,7 @@ export default {
         return jsonResponse({
           status: 'ok',
           timestamp: new Date().toISOString(),
-          version: '5.1.0'
+          version: '5.2.0'
         });
       }
 
@@ -454,7 +443,7 @@ export default {
         ).first();
 
         return jsonResponse(config || {
-          siteName: 'Xplitleaks',
+          siteName: SITE_NAME,
           siteLogo: null,
           siteLogoSvg: '',
           faviconUrl: '',
@@ -687,8 +676,7 @@ export default {
       }
 
       // ============================================
-      // ADVANCED SHORTS RECOMMENDATION v5.1
-      // Client-Side History + Smart Rotation
+      // ADVANCED SHORTS RECOMMENDATION v5.2
       // ============================================
       if (path === '/api/shorts/recommend' && method === 'GET') {
         const sessionId = getSessionId();
@@ -1021,7 +1009,6 @@ export default {
           return errorResponse('Username, email, and password required', 400);
         }
 
-        // Validate username and email format
         if (data.username.length > 50) {
           return errorResponse('Username too long (max 50 chars)', 400);
         }
@@ -1293,7 +1280,6 @@ export default {
         const { id } = await request.json().catch(() => ({}));
         if (!id) return errorResponse('Video ID required', 400);
 
-        // Verify ownership before deleting
         const video = await env.DB.prepare(
           'SELECT creatorId FROM videos WHERE numericId = ? OR id = ?'
         ).bind(id, id).first();
@@ -1320,7 +1306,6 @@ export default {
         const { id } = await request.json().catch(() => ({}));
         if (!id) return errorResponse('Short ID required', 400);
 
-        // Verify ownership before deleting
         const short = await env.DB.prepare(
           'SELECT creatorId FROM shorts WHERE numericId = ? OR id = ?'
         ).bind(id, id).first();
@@ -1342,7 +1327,6 @@ export default {
       // ADMIN AUTH
       // ============================================
 
-      // Admin login - single password/token approach
       if (path === '/api/admin/login' && method === 'POST') {
         const data = await request.json().catch(() => ({}));
         const { password } = data;
@@ -1351,7 +1335,6 @@ export default {
           return errorResponse('Password required', 400);
         }
 
-        // Check against ADMIN_TOKEN env variable (simple single-password auth)
         if (password !== env.ADMIN_TOKEN) {
           return errorResponse('Invalid credentials', 401);
         }
@@ -1363,7 +1346,6 @@ export default {
         });
       }
 
-      // Admin verify
       if (path === '/api/admin/verify' && method === 'GET') {
         if (!checkAdminAuth()) {
           return errorResponse('Unauthorized', 401);
@@ -1379,7 +1361,6 @@ export default {
         return errorResponse('Unauthorized', 401);
       }
 
-      // Admin stats
       if (path === '/api/admin/stats' && method === 'GET') {
         const videoCount = await env.DB.prepare(
           'SELECT COUNT(*) as count FROM videos WHERE status = \'active\''
@@ -1449,7 +1430,6 @@ export default {
         });
       }
 
-      // Admin config - PUT (full update)
       if (path === '/api/admin/config' && method === 'PUT') {
         const data = await request.json().catch(() => ({}));
 
@@ -1471,7 +1451,7 @@ export default {
               siteDescription = ?, updatedAt = datetime('now')
             WHERE id = 1
           `).bind(
-            data.siteName || 'Xplitleaks',
+            data.siteName || SITE_NAME,
             data.siteLogo || null,
             data.siteLogoSvg || '',
             data.faviconUrl || '',
@@ -1491,7 +1471,6 @@ export default {
         }
       }
 
-      // Admin config - POST (partial/dynamic update)
       if (path === '/api/admin/config' && method === 'POST') {
         const body = await request.json().catch(() => ({}));
 
@@ -1521,7 +1500,7 @@ export default {
             `INSERT INTO site_config (siteName, primaryColor, siteLogo, siteLogoSvg, faviconUrl, siteDescription, r2PublicUrl, vastTagUrl, outstreamAdTags, placementUrls, registrationEnabled)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
           ).bind(
-            body.siteName || 'Xplitleaks',
+            body.siteName || SITE_NAME,
             body.primaryColor || '#ff0050',
             body.siteLogo || '',
             body.siteLogoSvg || '',
@@ -1537,7 +1516,6 @@ export default {
         return jsonResponse({ success: true });
       }
 
-      // Admin: get creators
       if (path === '/api/admin/creators' && method === 'GET') {
         const status = url.searchParams.get('status');
 
@@ -1561,7 +1539,6 @@ export default {
         return jsonResponse(results || []);
       }
 
-      // Admin: update creator status (PUT - full status control)
       if (path === '/api/admin/creator/status' && method === 'PUT') {
         const { creatorId, status } = await request.json().catch(() => ({}));
 
@@ -1576,7 +1553,6 @@ export default {
         return jsonResponse({ success: true, message: `Creator ${status}` });
       }
 
-      // Admin: approve creator (POST convenience endpoint)
       if (path === '/api/admin/creator/approve' && method === 'POST') {
         const { id } = await request.json().catch(() => ({}));
         if (!id) return errorResponse('ID required', 400);
@@ -1585,7 +1561,6 @@ export default {
         return jsonResponse({ success: true });
       }
 
-      // Admin: reject creator (POST convenience endpoint)
       if (path === '/api/admin/creator/reject' && method === 'POST') {
         const { id } = await request.json().catch(() => ({}));
         if (!id) return errorResponse('ID required', 400);
@@ -1594,7 +1569,6 @@ export default {
         return jsonResponse({ success: true });
       }
 
-      // Admin: reset creator (POST convenience endpoint)
       if (path === '/api/admin/creator/reset' && method === 'POST') {
         const { id } = await request.json().catch(() => ({}));
         if (!id) return errorResponse('ID required', 400);
@@ -1603,7 +1577,6 @@ export default {
         return jsonResponse({ success: true });
       }
 
-      // Admin: get videos
       if (path === '/api/admin/videos' && method === 'GET') {
         const filter = url.searchParams.get('filter') || 'all';
 
@@ -1621,7 +1594,6 @@ export default {
         return jsonResponse({ videos: results || [] });
       }
 
-      // Admin: get shorts
       if (path === '/api/admin/shorts' && method === 'GET') {
         const filter = url.searchParams.get('filter') || 'all';
 
@@ -1639,7 +1611,6 @@ export default {
         return jsonResponse({ shorts: results || [] });
       }
 
-      // Admin: get iframe videos
       if (path === '/api/admin/iframes' && method === 'GET') {
         const { results } = await env.DB.prepare(`
           SELECT
@@ -1653,7 +1624,6 @@ export default {
         return jsonResponse(results || []);
       }
 
-      // Admin: delete video (soft delete - set status to removed)
       if (path === '/api/admin/video/delete' && method === 'DELETE') {
         const { id } = await request.json().catch(() => ({}));
         if (!id) return errorResponse('Video ID required', 400);
@@ -1666,7 +1636,6 @@ export default {
         return jsonResponse({ success: true, message: 'Video removed' });
       }
 
-      // Admin: delete short (soft delete - set status to removed)
       if (path === '/api/admin/short/delete' && method === 'DELETE') {
         const { id } = await request.json().catch(() => ({}));
         if (!id) return errorResponse('Short ID required', 400);
@@ -1679,7 +1648,6 @@ export default {
         return jsonResponse({ success: true, message: 'Short removed' });
       }
 
-      // Admin: get reports
       if (path === '/api/admin/reports' && method === 'GET') {
         const status = url.searchParams.get('status') || 'all';
 
@@ -1704,7 +1672,6 @@ export default {
         return jsonResponse(results || []);
       }
 
-      // Admin: get single report
       if (path.match(/^\/api\/admin\/report\/[0-9]+$/) && method === 'GET') {
         const reportId = path.split('/')[4];
         const report = await env.DB.prepare(`
@@ -1721,7 +1688,6 @@ export default {
         return jsonResponse(report);
       }
 
-      // Admin: update report status
       if (path === '/api/admin/report/status' && method === 'PUT') {
         const { reportId, status } = await request.json().catch(() => ({}));
 
@@ -1736,7 +1702,6 @@ export default {
         return jsonResponse({ success: true, message: `Report ${status}` });
       }
 
-      // Admin: resolve report (POST convenience endpoint)
       if (path === '/api/admin/report/resolve' && method === 'POST') {
         const { id } = await request.json().catch(() => ({}));
         if (!id) return errorResponse('ID required', 400);
@@ -1745,7 +1710,6 @@ export default {
         return jsonResponse({ success: true });
       }
 
-      // Admin: delete report
       if (path === '/api/admin/report/delete' && method === 'DELETE') {
         const { id } = await request.json().catch(() => ({}));
         if (!id) return errorResponse('Report ID required', 400);
@@ -1753,7 +1717,6 @@ export default {
         return jsonResponse({ success: true });
       }
 
-      // Admin: add category
       if (path === '/api/admin/category' && method === 'POST') {
         const body = await request.json().catch(() => ({}));
         const name = body.name?.trim();
@@ -1770,7 +1733,6 @@ export default {
         return jsonResponse({ success: true });
       }
 
-      // Admin: update category
       if (path.match(/^\/api\/admin\/category\/[a-zA-Z0-9_-]+$/) && method === 'PUT') {
         const id = path.split('/')[4];
         const body = await request.json().catch(() => ({}));
@@ -1782,7 +1744,6 @@ export default {
         return jsonResponse({ success: true });
       }
 
-      // Admin: delete category
       if (path.match(/^\/api\/admin\/category\/[a-zA-Z0-9_-]+$/) && method === 'DELETE') {
         const id = path.split('/')[4];
         const cat = await env.DB.prepare('SELECT slug FROM categories WHERE id = ?').bind(id).first();
@@ -1794,7 +1755,6 @@ export default {
         return jsonResponse({ success: true });
       }
 
-      // Admin: add tag
       if (path === '/api/admin/tag' && method === 'POST') {
         const body = await request.json().catch(() => ({}));
         const name = body.name?.trim().toLowerCase();
@@ -1810,7 +1770,6 @@ export default {
         return jsonResponse({ success: true });
       }
 
-      // Admin: update tag
       if (path.match(/^\/api\/admin\/tag\/[a-zA-Z0-9_-]+$/) && method === 'PUT') {
         const id = path.split('/')[4];
         const body = await request.json().catch(() => ({}));
@@ -1821,7 +1780,6 @@ export default {
         return jsonResponse({ success: true });
       }
 
-      // Admin: delete tag
       if (path.match(/^\/api\/admin\/tag\/[a-zA-Z0-9_-]+$/) && method === 'DELETE') {
         const id = path.split('/')[4];
         await env.DB.prepare('DELETE FROM video_tags WHERE tagId = ?').bind(id).run();
