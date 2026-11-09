@@ -54,7 +54,7 @@ const SITE_CONFIG = {
         // Favicon URL (can be .ico, .png, .svg)
         faviconUrl: '',
         // Default site name
-        siteName: 'Xplitleaks',
+        siteName: 'RawFrame',
         // Default primary color
         primaryColor: '#ff0050',
         // Site description for SEO
